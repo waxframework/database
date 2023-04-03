@@ -3,7 +3,10 @@
 namespace WaxFramework\Database\Query;
 
 use Closure;
+use WaxFramework\Database\Eloquent\Model;
+use WaxFramework\Database\Eloquent\Relations\HasMany;
 use WaxFramework\Database\Query\Compilers\Compiler;
+use WaxFramework\Database\Resolver;
 
 class Builder {
     /**
@@ -27,6 +30,13 @@ class Builder {
         'union'      => [],
         'unionOrder' => [],
     ];
+
+    /**
+     * The model being queried.
+     *
+     * @param \WaxFramework\Database\Eloquent\Model
+     */
+    protected $model;
 
     /**
      *
@@ -78,6 +88,13 @@ class Builder {
     public $wheres = [];
 
     /**
+     * The relationships that should be eager loaded.
+     *
+     * @var array
+     */
+    protected $relations = [];
+
+    /**
      * All of the available clause operators.
      *
      * @var string[]
@@ -99,6 +116,10 @@ class Builder {
     public $bitwiseOperators = [
         '&', '|', '^', '<<', '>>', '&~',
     ];
+
+    public function __construct( Model $model ) {
+        $this->model = $model;
+    }
 
     /**
      * Set the table which the query is targeting.
@@ -147,12 +168,88 @@ class Builder {
     
     public function get() {
         global $wpdb;
-        return $wpdb->get_results( $this->toSql() );
+        
+        $results = $wpdb->get_results( $this->toSql() );
+
+        if ( ! empty( $this->relations ) ) {
+            foreach ( $this->relations as $relation ) {
+                
+                /**
+                 * @var HasMany $relationship
+                 */
+                $relationship = $relation['relation'];
+                /**
+                 * @var Model $related
+                 */
+                $related = $relationship->getRelated();
+                
+                /**
+                 * @var Builder $query 
+                 */
+                $query = $relation['query'];
+
+                $resolver  = new Resolver;
+                $tableName = $resolver->table( $related::get_table_name() );
+                $query->from( $tableName )->whereIn( $tableName . '.' . $relationship->foreignKey, array_column( $results, $relationship->localKey ) );
+                
+                error_log( print_r( $query->toSql(), true ) );
+                error_log( $relationship->foreignKey );
+            }
+        }
+
+
+        return $results;
     }
 
     public function first() {
         $data = $this->get();
         return isset( $data[1] ) ? $data[1] : null;
+    }
+
+     /**
+     * Set the relationships that should be eager loaded.
+     *
+     * @param  string|array  $relations
+     * @param  string|Closure|null  $callback
+     * @return $this
+     */
+    public function with( $relations, $callback = null ) {
+        $relation_items       = explode( '.', $relations );
+        $model                = $this->model;
+        $parentRelationMethod = '';
+        $totalRelations       = count( $relation_items ) - 1;
+
+        foreach ( $relation_items as $key => $relationMethod ) {
+
+            // If the current relation method is already eager loaded, skip to the next one
+            if ( array_key_exists( $relationMethod, $this->relations ) ) {
+                $model                = $this->relations[$relationMethod]['related'];
+                $parentRelationMethod = $this->relations[$relationMethod]['relation'];
+                continue;
+            }
+            
+            $query = new static( $this->model );
+        
+            // If this is the last item and a callback is provided, apply the callback to the query
+            if ( $key ===  $totalRelations && $callback instanceof Closure ) {
+                call_user_func( $callback, $query );
+            }
+            
+            // Get the relation for the current relation method
+            $relation = $model->$relationMethod();
+
+            $relationFullName = empty( $parentRelationMethod ) ? $relationMethod : $parentRelationMethod . '.' . $relationMethod;
+
+            $this->relations[$relationFullName] = [
+                'query'    => $query,
+                'relation' => $relation,
+                'method'   => $relationMethod
+            ];
+
+            $model = $relation->getRelated();
+        }
+
+        return $this;
     }
 
     /**
@@ -282,7 +379,7 @@ class Builder {
      */
     public function join( $table, $first, $operator = null, $second = null, $type = 'inner' ) {
 
-        $join = new JoinClause( $table, $type );
+        $join = new JoinClause( $table, $type, $this->model );
 
         if ( $first instanceof Closure ) {
             call_user_func( $first, $join );

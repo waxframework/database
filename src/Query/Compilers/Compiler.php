@@ -99,7 +99,7 @@ class Compiler {
      * @return string
      */
     public function compileWheres( Builder $query ) {
-        if ( is_null( $query->wheres ) ) {
+        if ( empty( $query->wheres ) ) {
             return '';
         }
 

@@ -1,6 +1,7 @@
 <?php
 
 namespace WaxFramework\Database\Query;
+use WaxFramework\Database\Eloquent\Model;
 
 class JoinClause extends Builder
 {
@@ -25,9 +26,10 @@ class JoinClause extends Builder
      * @param  string  $type
      * @return void
      */
-    public function __construct( string $table, string $type ) {
+    public function __construct( string $table, string $type, Model $model ) {
         $this->table = $table;
         $this->type  =  $type;
+        parent::__construct( $model );
     }
 
     /**
