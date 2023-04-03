@@ -3,6 +3,7 @@
 namespace WaxFramework\Database\Query\Compilers;
 
 use WaxFramework\Database\Query\Builder;
+use WaxFramework\Database\Query\JoinClause;
 
 class Compiler {
     /**
@@ -14,7 +15,7 @@ class Compiler {
         // 'aggregate',
         'columns',
         'from',
-        // 'joins',
+        'joins',
         'wheres',
         'groups',
         // 'havings',
@@ -46,7 +47,7 @@ class Compiler {
         foreach ( $this->selectComponents as $component ) {
             if ( isset( $query->$component ) ) {
                 $method          = 'compile' . ucfirst( $component );
-                $sql[$component] = $this->$method( $query );
+                $sql[$component] = $this->$method( $query, $query->$component );
             }
         }
 
@@ -57,9 +58,10 @@ class Compiler {
      * Compile the "select *" portion of the query.
      *
      * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  array  $columns
      * @return string|null
      */
-    protected function compileColumns( Builder $query ) {
+    protected function compileColumns( Builder $query, $columns ) {
         // If the query is actually performing an aggregating select, we will let that
         // compiler handle the building of the select clauses, as it will need some
         // more syntax that is best handled by that function to keep things neat.
@@ -73,17 +75,21 @@ class Compiler {
             $select = 'select ';
         }
 
-        return $select . implode( ', ', $query->columns );
+        return $select . implode( ', ', $columns );
     }
 
     /**
      * Compile the "from" portion of the query.
      *
      * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param string $table
      * @return string
      */
-    protected function compileFrom( Builder $query ) {
-        return 'from ' . $query->from;
+    protected function compileFrom( Builder $query, $table ) {
+        if ( is_null( $query->as ) ) {
+            return 'from ' . $table;
+        }
+        return "from {$table} as {$query->as}";
     }
 
     /**
@@ -97,7 +103,11 @@ class Compiler {
             return '';
         }
 
-        $where_query = "where";
+        if ( $query instanceof JoinClause ) {
+            $where_query = "on";
+        } else {
+            $where_query = "where";
+        }
 
         foreach ( $query->wheres as $where ) {
             switch ( $where['type'] ) {
@@ -105,8 +115,13 @@ class Compiler {
                     $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$where['value']}";
                     break;
                 case 'between':
-                    $not          = $where['not'] ? 'not' : '';
-                    $where_query .= " {$where['boolean']} {$where['column']} {$not} between {$where['values'][0]} and {$where['values'][1]}";
+                    $between      = $where['not'] ? 'not between' : 'between';
+                    $where_query .= " {$where['boolean']} {$where['column']} {$between} {$where['values'][0]} and {$where['values'][1]}";
+                    break;
+                case 'in':
+                    $in           = $where['not'] ? 'not in' : 'in';
+                    $values       = implode( ', ', $where['values'] );
+                    $where_query .= " {$where['boolean']} {$where['column']} {$in} ({$values})";
                     break;
                 case 'exists':
                     /**
@@ -124,13 +139,36 @@ class Compiler {
     }
 
      /**
+     * Compile the "join" portions of the query.
+     *
+     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  array  $joins
+     * @return string
+     */
+    protected function compileJoins( Builder $query, $joins ) {
+        return implode(
+            ' ', array_map(
+                function( JoinClause $join ) use( $query ) {
+                    if ( is_null( $join->joins ) ) {
+                        $tableAndNestedJoins = $join->table;
+                    } else {
+                        $tableAndNestedJoins = '(' . $join->table . ' ' . $this->compileJoins( $query, $join->joins ) . ')';
+                    }
+                    return trim( "{$join->type} join {$tableAndNestedJoins} {$this->compileWheres($join)}" );
+                }, $joins
+            )
+        );
+    }
+
+     /**
      * Compile the "group by" portions of the query.
      *
      * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param array $groups
      * @return string
      */
-    protected function compileGroups( Builder $query ) {
-        return 'group by ' . implode( ', ', $query->groups );
+    protected function compileGroups( Builder $query, $groups ) {
+        return 'group by ' . implode( ', ', $groups );
     }
 
      /**

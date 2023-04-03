@@ -13,11 +13,11 @@ abstract class Model {
      *
      * @return \WaxFramework\Database\Query\Builder
      */
-    public static function query() {
+    public static function query( $as = null ) {
         $builder  = new Builder;
         $resolver = new Resolver;
 
-        $builder->from( $resolver->table( static::get_table_name() ) );
+        $builder->from( $resolver->table( static::get_table_name() ), $as );
 
         return $builder;
     }

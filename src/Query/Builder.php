@@ -2,6 +2,7 @@
 
 namespace WaxFramework\Database\Query;
 
+use Closure;
 use WaxFramework\Database\Query\Compilers\Compiler;
 
 class Builder {
@@ -33,6 +34,17 @@ class Builder {
      */
     public $from;
 
+    /**
+     *
+     * @var string
+     */
+    public $as;
+
+    /**
+     * The groupings for the query.
+     *
+     * @var array
+     */
     public $groups;
 
     /**
@@ -50,6 +62,13 @@ class Builder {
      * @var bool|array
      */
     public $distinct = false;
+
+     /**
+     * The table joins for the query.
+     *
+     * @var array
+     */
+    public $joins;
 
     /**
      * The where constraints for the query.
@@ -81,16 +100,36 @@ class Builder {
         '&', '|', '^', '<<', '>>', '&~',
     ];
 
-    public function from( string $table ) {
+    /**
+     * Set the table which the query is targeting.
+     *
+     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  string|null  $as
+     * @return $this
+     */
+    public function from( string $table, $as = null ) {
         $this->from = $table;
+        $this->as   = $as;
         return $this;
     }
 
+    /**
+     * Set the columns to be selected.
+     *
+     * @param  array|mixed  $columns
+     * @return $this
+     */
     public function select( $columns = ['*'] ) {
         $this->columns = is_array( $columns ) ? $columns : func_get_args();
         return $this;
     }
 
+    /**
+     * Force the query to only return distinct results.
+     *
+     * @param  mixed  ...$distinct
+     * @return $this
+     */
     public function distinct() {
         $this->distinct = true;
         return $this;
@@ -116,6 +155,15 @@ class Builder {
         return isset( $data[1] ) ? $data[1] : null;
     }
 
+    /**
+     * Add a basic where clause to the query.
+     *
+     * @param  string  $column
+     * @param  mixed  $operator
+     * @param  mixed  $value
+     * @param  string  $boolean
+     * @return $this
+     */
     public function where( $column, $operator = null, $value = null, $boolean = 'and' ) {
 
         // Here we will make some assumptions about the operator. If only 2 values are
@@ -145,7 +193,7 @@ class Builder {
      /**
      * Add an "or where" clause to the query.
      *
-     * @param  \Closure|string|array  $column
+     * @param  Closure|string|array  $column
      * @param  mixed  $operator
      * @param  mixed  $value
      * @return $this
@@ -168,9 +216,8 @@ class Builder {
      */
     public function whereExists( $callback, $boolean = 'and', $not = false ) {
 
-        if ( is_callable( $callback ) ) {
-            $query = $this->newQuery();
-            call_user_func( $callback, $query );
+        if ( $callback instanceof Closure ) {
+            call_user_func( $callback, new static );
         } else {
             $query = $callback;
         }
@@ -189,13 +236,88 @@ class Builder {
      * @param  string  $boolean
      * @return $this
      */
-    public function whereNotExists($callback, $boolean = 'and')
-    {
-        return $this->whereExists($callback, $boolean, true);
+    public function whereNotExists( $callback, $boolean = 'and' ) {
+        return $this->whereExists( $callback, $boolean, true );
     }
 
-    public function newQuery() {
-        return new static();
+     /**
+     * Add a "where in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @param  string  $boolean
+     * @param  bool  $not
+     * @return $this
+     */
+    public function whereIn( $column, $values, $boolean = 'and', $not = false ) {
+        $type = 'in';
+
+        $this->wheres[] = compact( 'type', 'column', 'values', 'boolean', 'not' );
+
+        return $this;
+    }
+
+    /**
+     * Add a "where not in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @param  string  $boolean
+     * @return $this
+     */
+    public function whereNotIn( $column, $values, $boolean = 'and' ) {
+        return $this->whereIn( $column, $values, $boolean, true );
+    }
+
+     /**
+     * Add a join clause to the query.
+     *
+     * @param  string  $table
+     * @param  Closure|string  $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @param  string  $type
+     * @param  bool  $where
+     * @return $this
+     */
+    public function join( $table, $first, $operator = null, $second = null, $type = 'inner' ) {
+
+        $join = new JoinClause( $table, $type );
+
+        if ( $first instanceof Closure ) {
+            call_user_func( $first, $join );
+        } else {
+            $join->where( $first, $operator, $second );
+        }
+
+        $this->joins[] = $join;
+        return $this;
+    }
+
+    /**
+     * Add a left join to the query.
+     *
+     * @param  string  $table
+     * @param  Closure|string  $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @return $this
+     */
+    public function leftJoin( $table, $first, $operator = null, $second = null ) {
+        return $this->join( $table, $first, $operator, $second, 'left' );
+    }
+
+     /**
+     * Add a right join to the query.
+     *
+     * @param  string  $table
+     * @param  Closure|string  $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @return $this
+     */
+    public function rightJoin( $table, $first, $operator = null, $second = null ) {
+        return $this->join( $table, $first, $operator, $second, 'right' );
     }
 
      /**
