@@ -6,6 +6,10 @@ use WaxFramework\Database\Resolver;
 
 class Relationship {
     protected function processRelationships( $parentItems, array $relations, Model $model ) {
+        if ( empty( $relations ) ) {
+            return $parentItems;
+        }
+
         foreach ( $relations as $key => $relation ) {
             /**
              * @var \WaxFramework\Database\Eloquent\Relations\Relation $relationship

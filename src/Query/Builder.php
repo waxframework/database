@@ -168,12 +168,7 @@ class Builder extends Relationship {
     public function get() {
         global $wpdb;
 
-        $data = $wpdb->get_results( $this->toSql() );
-
-        if ( empty( $this->relations ) ) {
-            return $data;
-        }
-        return $this->processRelationships( $data, $this->relations, $this->model );
+        return $this->processRelationships( $wpdb->get_results( $this->toSql() ), $this->relations, $this->model );
     }
 
     public function first() {
