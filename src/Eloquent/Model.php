@@ -3,6 +3,7 @@
 namespace WaxFramework\Database\Eloquent;
 
 use WaxFramework\Database\Eloquent\Relations\HasMany;
+use WaxFramework\Database\Eloquent\Relations\HasOne;
 use WaxFramework\Database\Query\Builder;
 use WaxFramework\Database\Resolver;
 
@@ -34,5 +35,17 @@ abstract class Model {
      */
     public function hasMany( $related, $foreignKey, $localKey ) {
         return new HasMany( $related, $foreignKey, $localKey );
+    }
+
+    /**
+     * Define a one-to-many relationship.
+     *
+     * @param  string $related
+     * @param  string  $foreignKey
+     * @param  string  $localKey
+     * @return \WaxFramework\Database\Eloquent\Relations\HasOne
+     */
+    public function hasOne( $related, $foreignKey, $localKey ) {
+        return new HasOne( $related, $foreignKey, $localKey );
     }
 }

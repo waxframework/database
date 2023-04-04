@@ -2,4 +2,4 @@
 
 namespace WaxFramework\Database\Eloquent\Relations;
 
-class HasMany extends Relation { }
+class HasOne extends Relation { }

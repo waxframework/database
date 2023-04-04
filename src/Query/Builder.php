@@ -4,11 +4,10 @@ namespace WaxFramework\Database\Query;
 
 use Closure;
 use WaxFramework\Database\Eloquent\Model;
-use WaxFramework\Database\Eloquent\Relations\HasMany;
+use WaxFramework\Database\Eloquent\Relationship;
 use WaxFramework\Database\Query\Compilers\Compiler;
-use WaxFramework\Database\Resolver;
 
-class Builder {
+class Builder extends Relationship {
     /**
      * The database connection instance.
      */
@@ -168,37 +167,13 @@ class Builder {
     
     public function get() {
         global $wpdb;
-        
-        $results = $wpdb->get_results( $this->toSql() );
 
-        if ( ! empty( $this->relations ) ) {
-            foreach ( $this->relations as $relation ) {
-                
-                /**
-                 * @var HasMany $relationship
-                 */
-                $relationship = $relation['relation'];
-                /**
-                 * @var Model $related
-                 */
-                $related = $relationship->getRelated();
-                
-                /**
-                 * @var Builder $query 
-                 */
-                $query = $relation['query'];
+        $data = $wpdb->get_results( $this->toSql() );
 
-                $resolver  = new Resolver;
-                $tableName = $resolver->table( $related::get_table_name() );
-                $query->from( $tableName )->whereIn( $tableName . '.' . $relationship->foreignKey, array_column( $results, $relationship->localKey ) );
-                
-                error_log( print_r( $query->toSql(), true ) );
-                error_log( $relationship->foreignKey );
-            }
+        if ( empty( $this->relations ) ) {
+            return $data;
         }
-
-
-        return $results;
+        return $this->processRelationships( $data, $this->relations, $this->model );
     }
 
     public function first() {
@@ -214,39 +189,24 @@ class Builder {
      * @return $this
      */
     public function with( $relations, $callback = null ) {
-        $relation_items       = explode( '.', $relations );
-        $model                = $this->model;
-        $parentRelationMethod = '';
-        $totalRelations       = count( $relation_items ) - 1;
+        $current = &$this->relations;
 
-        foreach ( $relation_items as $key => $relationMethod ) {
+        // Traverse the items string and create nested arrays
+        $items = explode( '.', $relations );
 
-            // If the current relation method is already eager loaded, skip to the next one
-            if ( array_key_exists( $relationMethod, $this->relations ) ) {
-                $model                = $this->relations[$relationMethod]['related'];
-                $parentRelationMethod = $this->relations[$relationMethod]['relation'];
-                continue;
+        foreach ( $items as $key ) {
+            if ( ! isset( $current[$key] ) ) {
+                $current[$key] = [
+                    'query'    => new self( $this->model ),
+                    'children' => []
+                ];
             }
-            
-            $query = new static( $this->model );
-        
-            // If this is the last item and a callback is provided, apply the callback to the query
-            if ( $key ===  $totalRelations && $callback instanceof Closure ) {
-                call_user_func( $callback, $query );
-            }
-            
-            // Get the relation for the current relation method
-            $relation = $model->$relationMethod();
+            $current = &$current[$key]['children'];
+        }
 
-            $relationFullName = empty( $parentRelationMethod ) ? $relationMethod : $parentRelationMethod . '.' . $relationMethod;
-
-            $this->relations[$relationFullName] = [
-                'query'    => $query,
-                'relation' => $relation,
-                'method'   => $relationMethod
-            ];
-
-            $model = $relation->getRelated();
+        // Apply the callback to the last item
+        if ( isset( $items[$key] ) ) {
+            call_user_func( $callback, $items[$key]['query'] );
         }
 
         return $this;
@@ -314,7 +274,7 @@ class Builder {
     public function whereExists( $callback, $boolean = 'and', $not = false ) {
 
         if ( $callback instanceof Closure ) {
-            call_user_func( $callback, new static );
+            call_user_func( $callback, new static( $this->model ) );
         } else {
             $query = $callback;
         }
