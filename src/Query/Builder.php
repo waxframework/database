@@ -210,8 +210,8 @@ class Builder extends Relationship {
     }
 
     public function first() {
-        $data = $this->limit(1)->get();
-        return isset( $data[1] ) ? $data[1] : null;
+        $data = $this->limit( 1 )->get();
+        return isset( $data[0] ) ? $data[0] : null;
     }
 
     /**
@@ -515,6 +515,14 @@ class Builder extends Relationship {
             'direction' => $direction,
         ];
         return $this;
+    }
+
+    /**
+     * Add a descending "order by" clause to the query.
+     * @return $this
+     */
+    public function orderByDesc( $column ) {
+        return $this->orderBy( $column, 'desc' );
     }
 
     /**
