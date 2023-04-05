@@ -210,7 +210,7 @@ class Builder extends Relationship {
     }
 
     public function first() {
-        $data = $this->get();
+        $data = $this->limit(1)->get();
         return isset( $data[1] ) ? $data[1] : null;
     }
 
