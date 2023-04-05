@@ -167,7 +167,9 @@ class Builder extends Relationship {
     
     public function get() {
         global $wpdb;
-
+        /**
+         * @var \wpdb $wpdb
+         */
         return $this->processRelationships( $wpdb->get_results( $this->toSql() ), $this->relations, $this->model );
     }
 

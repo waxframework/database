@@ -2,6 +2,7 @@
 
 namespace WaxFramework\Database\Eloquent;
 
+use WaxFramework\Database\Eloquent\Relations\HasOne;
 use WaxFramework\Database\Resolver;
 
 class Relationship {
@@ -10,6 +11,8 @@ class Relationship {
             return $parentItems;
         }
 
+        $resolver = new Resolver;
+
         foreach ( $relations as $key => $relation ) {
             /**
              * @var \WaxFramework\Database\Eloquent\Relations\Relation $relationship
@@ -17,7 +20,7 @@ class Relationship {
             $relationship = $model->$key();
 
             /**
-             * @var Model $related
+             * @var \WaxFramework\Database\Eloquent\Model $related
              */
             $related = $relationship->getRelated();
 
@@ -26,14 +29,15 @@ class Relationship {
              */
             $query = $relation['query'];
 
-            $resolver = new Resolver;
-
             $tableName = $resolver->table( $related::get_table_name() );
 
             $query->from( $tableName )->whereIn( $tableName . '.' . $relationship->foreignKey, array_column( $parentItems, $relationship->localKey ) );
 
             global $wpdb;
 
+            /**
+             * @var \wpdb $wpdb
+             */
             $results = $wpdb->get_results( $query->toSql() );
 
             $relations[$key]['relationship'] = $relationship;
@@ -62,7 +66,11 @@ class Relationship {
                     )
                 );
 
-                $parentItems[$parentKey]->$key = array_values( $childrenItems );
+                if ( $relationship instanceof HasOne ) {
+                    $childrenItems = isset( $childrenItems[0] ) ? $childrenItems[0] : null;
+                }
+
+                $parentItems[$parentKey]->$key = $childrenItems;
             }
         }
         return $parentItems;
