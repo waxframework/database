@@ -31,11 +31,11 @@ abstract class Model {
      * Define a one-to-many relationship.
      *
      * @param  string $related
-     * @param  string  $foreignKey
-     * @param  string  $localKey
+     * @param  string $foreignKey
+     * @param  string $localKey
      * @return \WaxFramework\Database\Eloquent\Relations\HasMany
      */
-    public function hasMany( $related, $foreignKey, $localKey ) {
+    public function hasMany( string $related, string $foreignKey, string $localKey ) {
         return new HasMany( $related, $foreignKey, $localKey );
     }
 

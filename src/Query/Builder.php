@@ -3,6 +3,7 @@
 namespace WaxFramework\Database\Query;
 
 use Closure;
+use InvalidArgumentException;
 use WaxFramework\Database\Eloquent\Model;
 use WaxFramework\Database\Eloquent\Relationship;
 use WaxFramework\Database\Query\Compilers\Compiler;
@@ -79,12 +80,33 @@ class Builder extends Relationship {
      */
     public $joins;
 
+     /**
+     * The table limit for the query.
+     *
+     * @var int
+     */
+    public $limit;
+
     /**
      * The where constraints for the query.
      *
      * @var array
      */
     public $wheres = [];
+
+    /**
+     * The orderings for the query.
+     *
+     * @var array
+     */
+    public $orders;
+
+    /**
+     * The number of records to skip.
+     *
+     * @var int
+     */
+    public $offset;
 
     /**
      * The relationships that should be eager loaded.
@@ -176,6 +198,17 @@ class Builder extends Relationship {
     public function first() {
         $data = $this->get();
         return isset( $data[1] ) ? $data[1] : null;
+    }
+
+    /**
+     * Set the "limit" value of the query.
+     *
+     * @param  int  $value
+     * @return $this
+     */
+    public function limit( int $value ) {
+        $this->limit = max( 1, $value );
+        return $this;
     }
 
      /**
@@ -412,6 +445,38 @@ class Builder extends Relationship {
     public function groupBy( ...$groups ) {
         $this->groups = $groups;
 
+        return $this;
+    }
+
+    /**
+     * Add an "order by" clause to the query.
+     *
+     * @param  string  $column
+     * @param  string  $direction
+     * @return $this
+     */
+    public function orderBy( $column, $direction = 'asc' ) {
+        $direction = strtolower( $direction );
+
+        if ( ! in_array( $direction, ['asc', 'desc'], true ) ) {
+            throw new InvalidArgumentException( 'Order direction must be "asc" or "desc".' );
+        }
+
+        $this->orders[] = [
+            'column'    => $column,
+            'direction' => $direction,
+        ];
+        return $this;
+    }
+
+    /**
+     * Set the "offset" value of the query.
+     *
+     * @param  int  $value
+     * @return $this
+     */
+    public function offset( int $value ) {
+        $this->offset = max( 0, $value );
         return $this;
     }
 

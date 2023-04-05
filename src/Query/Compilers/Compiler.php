@@ -19,10 +19,9 @@ class Compiler {
         'wheres',
         'groups',
         // 'havings',
-        // 'orders',
-        // 'limit',
-        // 'offset',
-        // 'lock',
+        'orders',
+        'limit',
+        'offset'
     ];
 
     /**
@@ -158,6 +157,49 @@ class Compiler {
                 }, $joins
             )
         );
+    }
+
+    /**
+     * Compile the "order by" portions of the query.
+     *
+     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  array  $orders
+     * @return string
+     */
+    protected function compileOrders( Builder $query, $orders ) {
+        if ( empty( $orders ) ) {
+            return '';
+        }
+
+        return 'order by ' . implode(
+            ', ', array_map(
+                function( $order ) {
+                    return $order['column'] . ' ' . $order['direction'];
+                }, $orders
+            )
+        );
+    }
+
+    /**
+     * Compile the "offset" portions of the query.
+     *
+     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  int  $offset
+     * @return string
+     */
+    protected function compileOffset( Builder $query, $offset ) {
+        return 'offset ' . (int) $offset;
+    }
+
+    /**
+     * Compile the "limit" portions of the query.
+     *
+     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  int  $limit
+     * @return string
+     */
+    protected function compileLimit( Builder $query, $limit ) {
+        return 'limit ' . (int) $limit;
     }
 
      /**
