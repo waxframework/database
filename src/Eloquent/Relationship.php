@@ -2,6 +2,7 @@
 
 namespace WaxFramework\Database\Eloquent;
 
+use WaxFramework\Database\Eloquent\Relations\BelongsToOne;
 use WaxFramework\Database\Eloquent\Relations\HasOne;
 use WaxFramework\Database\Resolver;
 
@@ -66,7 +67,7 @@ class Relationship {
                     )
                 );
 
-                if ( $relationship instanceof HasOne ) {
+                if ( $relationship instanceof HasOne || $relationship instanceof BelongsToOne ) {
                     $childrenItems = isset( $childrenItems[0] ) ? $childrenItems[0] : null;
                 }
 

@@ -2,6 +2,8 @@
 
 namespace WaxFramework\Database\Eloquent;
 
+use WaxFramework\Database\Eloquent\Relations\BelongsToMany;
+use WaxFramework\Database\Eloquent\Relations\BelongsToOne;
 use WaxFramework\Database\Eloquent\Relations\HasMany;
 use WaxFramework\Database\Eloquent\Relations\HasOne;
 use WaxFramework\Database\Query\Builder;
@@ -47,5 +49,29 @@ abstract class Model {
      */
     public function hasOne( $related, $foreignKey, $localKey ) {
         return new HasOne( $related, $foreignKey, $localKey );
+    }
+
+    /**
+     * Define an inverse one-to-one relationship.
+     *
+     * @param  string $related
+     * @param  string  $foreignKey
+     * @param  string  $localKey
+     * @return \WaxFramework\Database\Eloquent\Relations\BelongsToOne
+     */
+    public function belongsToOne( $related, $foreignKey, $localKey ) {
+        return new BelongsToOne( $related, $foreignKey, $localKey );
+    }
+
+    /**
+     * Define an inverse many-to-many relationship.
+     *
+     * @param  string $related
+     * @param  string  $foreignKey
+     * @param  string  $localKey
+     * @return \WaxFramework\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function belongsToMany( $related, $foreignKey, $localKey ) {
+        return new BelongsToMany( $related, $foreignKey, $localKey );
     }
 }
