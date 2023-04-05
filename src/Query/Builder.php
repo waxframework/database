@@ -58,6 +58,13 @@ class Builder extends Relationship {
     public $groups;
 
     /**
+     * An aggregate function and column to be run.
+     *
+     * @var array
+     */
+    public $aggregate;
+
+    /**
      * The columns that should be returned.
      *
      * @var array
@@ -93,6 +100,13 @@ class Builder extends Relationship {
      * @var array
      */
     public $wheres = [];
+
+    /**
+     * The having constraints for the query.
+     *
+     * @var array
+     */
+    public $havings;
 
     /**
      * The orderings for the query.
@@ -382,6 +396,40 @@ class Builder extends Relationship {
     }
 
     /**
+     * Add a "having" clause to the query.
+     *
+     * @param  string  $column
+     * @param  string|null  $operator
+     * @param  string|null  $value
+     * @param  string  $boolean
+     * @return $this
+     */
+    public function having( $column, $operator = null, $value = null, $boolean = 'and' ) {   
+        // Here we will make some assumptions about the operator. If only 2 values are
+        // passed to the method, we will assume that the operator is an equals sign
+        // and keep going. Otherwise, we'll require the operator to be passed in.
+        [$value, $operator] = $this->prepareValueAndOperator(
+            $value, $operator, func_num_args() === 2
+        );
+
+        // If the given operator is not found in the list of valid operators we will
+        // assume that the developer is just short-cutting the '=' operators and
+        // we will set the operators to '=' and set the values appropriately.
+        if ( $this->invalidOperator( $operator ) ) {
+            [$value, $operator] = [$operator, '='];
+        }
+
+        $type = 'basic';
+
+        // Now that we are working with just a simple query we can put the elements
+        // in our array and add the query binding to our array of bindings that
+        // will be bound to each SQL statements when it is finally executed.
+        $this->havings[] = compact( 'type', 'boolean', 'column', 'operator', 'value' );
+
+        return $this;
+    }
+
+    /**
      * Add a left join to the query.
      *
      * @param  string  $table
@@ -478,6 +526,80 @@ class Builder extends Relationship {
     public function offset( int $value ) {
         $this->offset = max( 0, $value );
         return $this;
+    }
+    
+    public function aggregate( $function, $columns = ['*'] ) {
+        $results = $this->setAggregate( $function, $columns )->get();
+        return (int) $results[0]->aggregate;
+    }
+
+    /**
+     * Set the aggregate property without running the query.
+     *
+     * @param  string  $function
+     * @param  array  $columns
+     * @return $this
+     */
+    protected function setAggregate( $function, $columns ) {
+        $this->aggregate = compact( 'function', 'columns' );
+
+        if ( empty( $this->groups ) ) {
+            $this->orders = null;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Retrieve the "count" result of the query.
+     *
+     * @param  string  $columns
+     * @return int
+     */
+    public function count( string $column = '*' ) {
+        return $this->aggregate( __FUNCTION__, [$column] );
+    }
+
+    /**
+     * Retrieve the minimum value of a given column.
+     *
+     * @param  string  $column
+     * @return mixed
+     */
+    public function min( $column ) {
+        return $this->aggregate( __FUNCTION__, [$column] );
+    }
+
+    /**
+     * Retrieve the maximum value of a given column.
+     *
+     * @param  string  $column
+     * @return mixed
+     */
+    public function max( $column ) {
+        return $this->aggregate( __FUNCTION__, [$column] );
+    }
+
+    /**
+     * Retrieve the sum of the values of a given column.
+     *
+     * @param  string  $column
+     * @return mixed
+     */
+    public function sum( $column ) {
+        $result = $this->aggregate( __FUNCTION__, [$column] );
+
+        return $result ?: 0;
+    }
+
+    /**
+     * Retrieve the average of the values of a given column.
+     *
+     * @param  string  $column
+     * @return mixed
+     */
+    public function avg( $column ) {
+        return $this->aggregate( __FUNCTION__, [$column] );
     }
 
       /**

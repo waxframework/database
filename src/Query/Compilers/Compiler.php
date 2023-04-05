@@ -12,13 +12,13 @@ class Compiler {
      * @var string[]
      */
     protected $selectComponents = [
-        // 'aggregate',
+        'aggregate',
         'columns',
         'from',
         'joins',
         'wheres',
         'groups',
-        // 'havings',
+        'havings',
         'orders',
         'limit',
         'offset'
@@ -56,7 +56,7 @@ class Compiler {
     /**
      * Compile the "select *" portion of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  \WaxFramework\Database\Query\Builder $query
      * @param  array  $columns
      * @return string|null
      */
@@ -64,9 +64,9 @@ class Compiler {
         // If the query is actually performing an aggregating select, we will let that
         // compiler handle the building of the select clauses, as it will need some
         // more syntax that is best handled by that function to keep things neat.
-        // if (! is_null($query->aggregate)) {
-        //     return;
-        // }
+        if ( ! is_null( $query->aggregate ) ) {
+            return;
+        }
 
         if ( $query->distinct ) {
             $select = 'select distinct ';
@@ -75,6 +75,23 @@ class Compiler {
         }
 
         return $select . implode( ', ', $columns );
+    }
+
+    /**
+     * Compile an aggregated select clause.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  array  $aggregate
+     * @return string
+     */
+    protected function compileAggregate( Builder $query, $aggregate ) {
+        $column = implode( ',', $query->aggregate['columns'] );
+        
+        if ( $query->distinct ) {
+            $column = 'distinct ' . $column;
+        }
+
+        return 'select ' . $aggregate['function'] . '(' . $column . ') as aggregate';
     }
 
     /**
@@ -108,7 +125,13 @@ class Compiler {
             $where_query = "where";
         }
 
-        foreach ( $query->wheres as $where ) {
+        return $this->compileWhereOrHaving( $query->wheres, $where_query );
+    }
+
+    protected function compileWhereOrHaving( array $items, string $type = 'where' ) {
+        $where_query = $type;
+
+        foreach ( $items as $where ) {
             switch ( $where['type'] ) {
                 case 'basic':
                     $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$where['value']}";
@@ -181,9 +204,22 @@ class Compiler {
     }
 
     /**
+     * Compile the "having" portions of the query.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @return string
+     */
+    protected function compileHavings( Builder $query ) {
+        if ( empty( $query->havings ) ) {
+            return '';
+        }
+        return $this->compileWhereOrHaving( $query->havings, 'having' );
+    }
+
+    /**
      * Compile the "offset" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  \WaxFramework\Database\Query\Builder $query
      * @param  int  $offset
      * @return string
      */
