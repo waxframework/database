@@ -240,17 +240,20 @@ class Builder extends Relationship {
 
         foreach ( $items as $key ) {
             if ( ! isset( $current[$key] ) ) {
+                $query         = new self( $this->model );
                 $current[$key] = [
-                    'query'    => new self( $this->model ),
+                    'query'    => $query,
                     'children' => []
                 ];
+            } else {
+                $query = $current[$key]['query'];
             }
             $current = &$current[$key]['children'];
         }
 
         // Apply the callback to the last item
-        if ( isset( $items[$key] ) ) {
-            call_user_func( $callback, $items[$key]['query'] );
+        if ( $callback instanceof Closure ) {
+            call_user_func( $callback, $query );
         }
 
         return $this;
