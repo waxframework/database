@@ -23,7 +23,7 @@ abstract class Model {
         $model   = new static;
         $builder = new Builder( $model );
 
-        $builder->from( $model->resolver()->table( static::get_table_name() ), $as );
+        $builder->from( static::get_table_name(), $as );
 
         return $builder;
     }

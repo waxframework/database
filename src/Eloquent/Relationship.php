@@ -27,10 +27,10 @@ class Relationship {
              * @var \WaxFramework\Database\Query\Builder $query 
              */
             $query = $relation['query'];
-            
-            $table_name = $related->resolver()->table( $related::get_table_name() );
 
-            $query->from( $table_name )->where_in( $table_name . '.' . $relationship->foreign_key, array_column( $parent_items, $relationship->local_key ) );
+            $query->from( $related::get_table_name() );
+            
+            $query->where_in( $query->from . '.' . $relationship->foreign_key, array_column( $parent_items, $relationship->local_key ) );
 
             global $wpdb;
 

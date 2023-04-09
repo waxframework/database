@@ -141,8 +141,8 @@ class Builder extends Relationship {
      * @return $this
      */
     public function from( string $table, $as = null ) {
-        $this->from = $table;
-        $this->as   = $as;
+        $this->from = $this->model->resolver()->table( $table );
+        $this->as   = is_null( $as ) ? $table : $as;
         return $this;
     }
 
@@ -315,7 +315,8 @@ class Builder extends Relationship {
     public function where_exists( $callback, $boolean = 'and', $not = false ) {
 
         if ( $callback instanceof Closure ) {
-            call_user_func( $callback, new static( $this->model ) );
+            $query = new static( $this->model );
+            call_user_func( $callback, $query );
         } else {
             $query = $callback;
         }
@@ -581,7 +582,7 @@ class Builder extends Relationship {
      *
      * @param  array  $values
      */
-    public function insertGetId( array $values ) {
+    public function insert_get_id( array $values ) {
         $this->insert( $values );
         global $wpdb;
         /**
