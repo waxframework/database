@@ -7,29 +7,15 @@ use InvalidArgumentException;
 use WaxFramework\Database\Eloquent\Model;
 use WaxFramework\Database\Eloquent\Relationship;
 use WaxFramework\Database\Query\Compilers\Compiler;
+use wpdb;
 
 class Builder extends Relationship {
-    /**
-     * The database connection instance.
-     */
-    public $connection;
-
      /**
      * The current query value bindings.
      *
      * @var array
      */
-    public $bindings = [
-        'select'     => [],
-        'from'       => [],
-        'join'       => [],
-        'where'      => [],
-        'groupBy'    => [],
-        'having'     => [],
-        'order'      => [],
-        'union'      => [],
-        'unionOrder' => [],
-    ];
+    public $bindings = [];
 
     /**
      * The model being queried.
@@ -143,15 +129,6 @@ class Builder extends Relationship {
         'not similar to', 'not ilike', '~~*', '!~~*',
     ];
 
-    /**
-     * All of the available bitwise operators.
-     *
-     * @var string[]
-     */
-    public $bitwiseOperators = [
-        '&', '|', '^', '<<', '>>', '&~',
-    ];
-
     public function __construct( Model $model ) {
         $this->model = $model;
     }
@@ -198,13 +175,62 @@ class Builder extends Relationship {
      */
     public function toSql() {
         $compiler = new Compiler;
-        return $compiler->compileSelect( $this );
+        return $this->bindValues( $compiler->compileSelect( $this ) );
     }
     
+    /**
+     * Get the SQL representation of the query.
+     *
+     * @return string
+     */
+    public function toSqlUpdate( array $values ) {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileUpdate( $this, $values ) );
+    }
+
+    /**
+     * Get the SQL representation of the query.
+     *
+     * @return string
+     */
+    public function toSqlDelete() {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileDelete( $this ) );
+    }
+    
+    /**
+     * Delete records from the database.
+     *
+     * @return mixed
+     */
+    public function delete() {
+        global $wpdb;
+        return $wpdb->query( $this->toSqlDelete() );
+    }
+
+     /**
+     * Insert new records into the database.
+     *
+     * @param  array  $values
+     * @return string
+     */
+    public function toSqlInsert( array $values ) {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileInsert( $this, $values ) );
+    }
+
+    protected function bindValues( string $sql ) {
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        return $wpdb->prepare( $sql, ...$this->bindings );
+    }
+
     public function get() {
         global $wpdb;
         /**
-         * @var \wpdb $wpdb
+         * @var wpdb $wpdb
          */
         return $this->processRelationships( $wpdb->get_results( $this->toSql() ), $this->relations, $this->model );
     }
@@ -212,6 +238,42 @@ class Builder extends Relationship {
     public function first() {
         $data = $this->limit( 1 )->get();
         return isset( $data[0] ) ? $data[0] : null;
+    }
+
+    /**
+     * Insert new records into the database.
+     *
+     * @param  array  $values
+     * @return bool|integer
+     */
+    public function insert( array $values ) {
+        $sql = $this->toSqlInsert( $values );
+        global $wpdb;
+        return $wpdb->query( $sql );
+    }
+
+    /**
+     * Insert new single record into the database and get id.
+     *
+     * @param  array  $values
+     */
+    public function insertGetId( array $values ) {
+        $this->insert( $values );
+        global $wpdb;
+        return $wpdb->insert_id;
+    }
+
+    /**
+     * Update records in the database.
+     *
+     * @param array $values
+     * @return integer
+     */
+    public function update( array $values ) {
+        $sql = $this->toSqlUpdate( $values );
+        global $wpdb;
+        $result = $wpdb->query( $sql );
+        return $result;
     }
 
     /**
@@ -225,7 +287,7 @@ class Builder extends Relationship {
         return $this;
     }
 
-     /**
+    /**
      * Set the relationships that should be eager loaded.
      *
      * @param  string|array  $relations
@@ -443,6 +505,28 @@ class Builder extends Relationship {
      */
     public function leftJoin( $table, $first, $operator = null, $second = null ) {
         return $this->join( $table, $first, $operator, $second, 'left' );
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function setBinding( $value ) {
+        $this->bindings[] = $value;
+
+        $type = gettype( $value );
+
+        if ( 'integer' === $type || 'boolean' === $type ) {
+            return '%d';
+        }
+
+        if ( 'double' === $type ) {
+            return '%f';
+        }
+
+        return '%s';
     }
 
      /**

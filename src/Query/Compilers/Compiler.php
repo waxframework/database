@@ -27,11 +27,86 @@ class Compiler {
     /**
      * Compile a select query into SQL.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  \WaxFramework\Database\Query\Builder $query
      * @return string
      */
     public function compileSelect( Builder $query ) {
         return $this->concatenate( $this->compileComponents( $query ) );
+    }
+
+    /**
+     * Compile an update statement into SQL.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  array  $values
+     * @return string
+     */
+    public function compileUpdate( Builder $query, array $values ) {
+
+        $keys = array_keys( $values );
+
+        $columns = implode(
+            ', ', array_map(
+                function( $value, $key ) use( $query ){
+                        return $key . ' = ' . $query->setBinding( $value );
+                }, $values, $keys
+            )
+        );
+
+        $where = $this->compileWheres( $query );
+
+        return "update {$query->from} set {$columns} {$where}";
+    }
+
+    /**
+     * Compile a delete statement into SQL.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @return string
+     */
+    public function compileDelete( Builder $query ) {
+        $where = $this->compileWheres( $query );
+        
+        return "delete from {$query->from} {$where}";
+    }
+
+    /**
+     * Compile an insert statement into SQL.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  array  $values
+     * @return string
+     */
+    public function compileInsert( Builder $query, array $values ) {
+        if ( ! is_array( reset( $values ) ) ) {
+            $values = [$values];
+        } else {
+            foreach ( $values as $key => $value ) {
+                ksort( $value );
+
+                $values[$key] = $value;
+            }
+        }
+
+        $columns = $this->columnize( array_keys( reset( $values ) ) );
+
+        $parameters = implode(
+            ', ', array_map(
+                function( $record ) use( $query ) {
+                    return '(' . implode(
+                        ', ', array_map(
+                            function( $item ) use( $query ) {
+                                return $query->setBinding( $item );
+                            }, $record
+                        ) 
+                    ) . ')';
+                }, $values
+            )
+        );
+
+        $table = $query->from;
+
+        return "insert into $table ($columns) values $parameters";
     }
 
     /**
@@ -74,7 +149,7 @@ class Compiler {
             $select = 'select ';
         }
 
-        return $select . implode( ', ', $columns );
+        return $select . $this->columnize( $columns );
     }
 
     /**
@@ -85,7 +160,7 @@ class Compiler {
      * @return string
      */
     protected function compileAggregate( Builder $query, $aggregate ) {
-        $column = implode( ',', $query->aggregate['columns'] );
+        $column = $this->columnize( $query->aggregate['columns'] );
         
         if ( $query->distinct ) {
             $column = 'distinct ' . $column;
@@ -125,24 +200,30 @@ class Compiler {
             $where_query = "where";
         }
 
-        return $this->compileWhereOrHaving( $query->wheres, $where_query );
+        return $this->compileWhereOrHaving( $query, $query->wheres, $where_query );
     }
 
-    protected function compileWhereOrHaving( array $items, string $type = 'where' ) {
+    protected function compileWhereOrHaving( Builder $query, array $items, string $type = 'where' ) {
         $where_query = $type;
 
         foreach ( $items as $where ) {
             switch ( $where['type'] ) {
                 case 'basic':
-                    $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$where['value']}";
+                    $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$query->setBinding($where['value'])}";
                     break;
                 case 'between':
                     $between      = $where['not'] ? 'not between' : 'between';
-                    $where_query .= " {$where['boolean']} {$where['column']} {$between} {$where['values'][0]} and {$where['values'][1]}";
+                    $where_query .= " {$where['boolean']} {$where['column']} {$between} {$query->setBinding($where['values'][0])} and {$query->setBinding($where['values'][1])}";
                     break;
                 case 'in':
                     $in           = $where['not'] ? 'not in' : 'in';
-                    $values       = implode( ', ', $where['values'] );
+                    $values       = implode(
+                        ', ', array_map(
+                            function( $value ) use( $query ) {
+                                return $query->setBinding( $value );
+                            }, $where['values']
+                        ) 
+                    );
                     $where_query .= " {$where['boolean']} {$where['column']} {$in} ({$values})";
                     break;
                 case 'exists':
@@ -213,7 +294,7 @@ class Compiler {
         if ( empty( $query->havings ) ) {
             return '';
         }
-        return $this->compileWhereOrHaving( $query->havings, 'having' );
+        return $this->compileWhereOrHaving( $query, $query->havings, 'having' );
     }
 
     /**
@@ -224,7 +305,7 @@ class Compiler {
      * @return string
      */
     protected function compileOffset( Builder $query, $offset ) {
-        return 'offset ' . (int) $offset;
+        return 'offset ' . $query->setBinding( $offset );
     }
 
     /**
@@ -235,7 +316,7 @@ class Compiler {
      * @return string
      */
     protected function compileLimit( Builder $query, $limit ) {
-        return 'limit ' . (int) $limit;
+        return 'limit ' . $query->setBinding( $limit );
     }
 
      /**
@@ -263,6 +344,16 @@ class Compiler {
                 }
             )
         );
+    }
+
+    /**
+     * Convert an array of column names into a delimited string.
+     *
+     * @param  array  $columns
+     * @return string
+     */
+    public function columnize( array $columns ) {
+        return implode( ', ', $columns );
     }
 
      /**
