@@ -304,6 +304,40 @@ class Builder extends Relationship {
         return $this->where( $column, $operator, $value, 'or' );
     }
 
+     /**
+     * Add a "where" clause comparing two columns to the query.
+     * 
+     * @param  string  $column
+     * @param  mixed  $operator
+     * @param  mixed  $value
+     * @param  string  $boolean
+     * @return $this
+     */
+    public function where_column($column, $operator = null, $value = null, $boolean = 'and') {
+        // Here we will make some assumptions about the operator. If only 2 values are
+        // passed to the method, we will assume that the operator is an equals sign
+        // and keep going. Otherwise, we'll require the operator to be passed in.
+        [$value, $operator] = $this->prepare_value_and_operator(
+            $value, $operator, func_num_args() === 2
+        );
+
+        // If the given operator is not found in the list of valid operators we will
+        // assume that the developer is just short-cutting the '=' operators and
+        // we will set the operators to '=' and set the values appropriately.
+        if ( $this->invalid_operator( $operator ) ) {
+            [$value, $operator] = [$operator, '='];
+        }
+
+        $type = 'column';
+
+        // Now that we are working with just a simple query we can put the elements
+        // in our array and add the query binding to our array of bindings that
+        // will be bound to each SQL statements when it is finally executed.
+        $this->wheres[] = compact( 'type', 'boolean', 'column', 'operator', 'value' );
+
+        return $this;
+    }
+
     /**
      * Add an exists clause to the query.
      *
@@ -335,7 +369,7 @@ class Builder extends Relationship {
      * @param  string  $boolean
      * @return $this
      */
-    public function whereNotExists( $callback, $boolean = 'and' ) {
+    public function where_not_exists( $callback, $boolean = 'and' ) {
         return $this->where_exists( $callback, $boolean, true );
     }
 
@@ -393,7 +427,7 @@ class Builder extends Relationship {
      * @param  string  $boolean
      * @return $this
      */
-    public function whereNotBetween( $column, array $values, $boolean = 'and' ) {
+    public function where_not_between( $column, array $values, $boolean = 'and' ) {
         return $this->where_between( $column, $values, $boolean, true );
     }
 

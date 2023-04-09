@@ -14,6 +14,16 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 - [Insert Data](#insert-data)
 - [Update Data](#update-data)
 - [Delete Data](#delete-data)
+- [Read Data](#read-data)
+	- [get()](#get)
+	- [where()](#where)
+	- [where\_in()](#where_in)
+	- [limit()](#limit)
+	- [first()](#first)
+	- [order\_by()](#order_by)
+	- [order\_by\_desc()](#order_by_desc)
+	- [group\_by()](#group_by)
+	- [where\_exists() and where\_column()](#where_exists-and-where_column)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -92,3 +102,71 @@ To delete a post where the post id is 100, use the following code:
 ```php
 Post::query()->where('post_id', 100)->delete();
 ```
+
+# Read Data
+To retrieve data, the WaxFramework Database offers a variety of methods:
+Get all posts
+
+## get()
+To get all the posts, use the `get` method as shown below:
+```php
+$posts = Post::query()->get();
+```
+## where()
+To get only published posts, use the `where` method as shown below:
+
+```php
+$posts = Post::query()->where('post_status', 'publish')->get();
+```
+## where_in()
+To get posts by given ids, use the `where_in` method as shown below:
+
+```php
+$posts = Post::query()->where_in('ID', [100, 105])->get();
+```
+## limit()
+To limit the number of posts retrieved, use the `limit` method as shown below:
+```php
+$posts = Post::query()->where('post_status', 'publish')->limit(10)->get();
+```
+## first()
+To retrieve a single record from the database, use the `first` method as shown below:
+```php
+$posts = Post::query()->where('id', 100)->first();
+```
+## order_by()
+Order posts ascending order by post_id column using `order_by`
+
+```php
+$posts = Post::query()->order_by('post_id')->get();
+```
+## order_by_desc()
+Order posts descending order by post_id column using `order_by_desc`
+
+```php
+$posts = Post::query()->order_by_desc('post_id')->get();
+```
+## group_by()
+Group the posts by post_author column using `group_by` method 
+
+```php
+$posts = Post::query()->group_by('post_author')->get();
+```
+## where_exists() and where_column()
+The `where_exists` and `where_column` methods are useful when you need to retrieve data from two different tables that have a common column.
+
+To get all posts if the post has meta data, you can use either of the following two processes:
+
+1. Process One: In this process, we use a closure function to define a subquery that selects `1` from the `postmeta` table where the `post_id` column in `postmeta` table is equal to the `ID` column in the `posts` table. The closure function is passed as an argument to the `where_exists` method to filter the posts.
+	```php
+	$posts = Post::query()->(function(Builder $query) {
+		$query->select(1)->from('postmeta')->where_column('postmeta.post_id', 'posts.id')->limit(1);
+	})->get();
+	```
+
+2. Alternatively Process: In this process, we first define a variable `$post_meta` that selects `1` from the `postmeta` table where the `post_id` column in `postmeta` table is equal to the `ID` column in the `posts` table. Then we use the `where_exists` method and pass the `$post_meta` variable as an argument to filter the posts.
+	```php
+	$post_meta = PostMeta::query()->select(1)->where_column('postmeta.post_id', 'posts.id')->limit(1);
+	$posts     = Post::query()->where_exists($post_meta)->get();
+	```
+In both of these processes, we use the `where_column` method to specify the column names in the two tables that should be compared. This allows us to filter the posts based on whether or not they have meta data.

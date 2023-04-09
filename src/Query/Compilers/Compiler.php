@@ -223,6 +223,9 @@ class Compiler {
                     );
                     $where_query .= " {$where['boolean']} {$where['column']} {$in} ({$values})";
                     break;
+                case 'column':
+                    $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$where['value']}";
+                    break;
                 case 'exists':
                     /**
                      * @var Builder $query
