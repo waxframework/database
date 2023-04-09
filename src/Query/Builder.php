@@ -236,7 +236,7 @@ class Builder extends Relationship {
      * @param  string|null  $second
      * @return $this
      */
-    public function leftJoin( $table, $first, $operator = null, $second = null ) {
+    public function left_join( $table, $first, $operator = null, $second = null ) {
         return $this->join( $table, $first, $operator, $second, 'left' );
     }
 
@@ -249,7 +249,7 @@ class Builder extends Relationship {
      * @param  string|null  $second
      * @return $this
      */
-    public function rightJoin( $table, $first, $operator = null, $second = null ) {
+    public function right_join( $table, $first, $operator = null, $second = null ) {
         return $this->join( $table, $first, $operator, $second, 'right' );
     }
 
@@ -267,14 +267,14 @@ class Builder extends Relationship {
         // Here we will make some assumptions about the operator. If only 2 values are
         // passed to the method, we will assume that the operator is an equals sign
         // and keep going. Otherwise, we'll require the operator to be passed in.
-        [$value, $operator] = $this->prepareValueAndOperator(
+        [$value, $operator] = $this->prepare_value_and_operator(
             $value, $operator, func_num_args() === 2
         );
 
         // If the given operator is not found in the list of valid operators we will
         // assume that the developer is just short-cutting the '=' operators and
         // we will set the operators to '=' and set the values appropriately.
-        if ( $this->invalidOperator( $operator ) ) {
+        if ( $this->invalid_operator( $operator ) ) {
             [$value, $operator] = [$operator, '='];
         }
 
@@ -296,8 +296,8 @@ class Builder extends Relationship {
      * @param  mixed  $value
      * @return $this
      */
-    public function orWhere( $column, $operator = null, $value = null ) {
-        [$value, $operator] = $this->prepareValueAndOperator(
+    public function or_where( $column, $operator = null, $value = null ) {
+        [$value, $operator] = $this->prepare_value_and_operator(
             $value, $operator, func_num_args() === 2
         );
 
@@ -312,7 +312,7 @@ class Builder extends Relationship {
      * @param  bool  $not
      * @return $this
      */
-    public function whereExists( $callback, $boolean = 'and', $not = false ) {
+    public function where_exists( $callback, $boolean = 'and', $not = false ) {
 
         if ( $callback instanceof Closure ) {
             call_user_func( $callback, new static( $this->model ) );
@@ -335,7 +335,7 @@ class Builder extends Relationship {
      * @return $this
      */
     public function whereNotExists( $callback, $boolean = 'and' ) {
-        return $this->whereExists( $callback, $boolean, true );
+        return $this->where_exists( $callback, $boolean, true );
     }
 
      /**
@@ -347,7 +347,7 @@ class Builder extends Relationship {
      * @param  bool  $not
      * @return $this
      */
-    public function whereIn( $column, $values, $boolean = 'and', $not = false ) {
+    public function where_in( $column, $values, $boolean = 'and', $not = false ) {
         $type = 'in';
 
         $this->wheres[] = compact( 'type', 'column', 'values', 'boolean', 'not' );
@@ -363,8 +363,8 @@ class Builder extends Relationship {
      * @param  string  $boolean
      * @return $this
      */
-    public function whereNotIn( $column, $values, $boolean = 'and' ) {
-        return $this->whereIn( $column, $values, $boolean, true );
+    public function where_not_in( $column, $values, $boolean = 'and' ) {
+        return $this->where_in( $column, $values, $boolean, true );
     }
 
     /**
@@ -376,7 +376,7 @@ class Builder extends Relationship {
      * @param  bool  $not
      * @return $this
      */
-    public function whereBetween( $column, array $values, $boolean = 'and', $not = false ) {
+    public function where_between( $column, array $values, $boolean = 'and', $not = false ) {
         $type = 'between';
 
         $this->wheres[] = compact( 'type', 'boolean', 'column', 'values', 'not' );
@@ -393,7 +393,7 @@ class Builder extends Relationship {
      * @return $this
      */
     public function whereNotBetween( $column, array $values, $boolean = 'and' ) {
-        return $this->whereBetween( $column, $values, $boolean, true );
+        return $this->where_between( $column, $values, $boolean, true );
     }
 
     /**
@@ -402,7 +402,7 @@ class Builder extends Relationship {
      * @param  array|string  ...$groups
      * @return $this
      */
-    public function groupBy( ...$groups ) {
+    public function group_by( ...$groups ) {
         $this->groups = $groups;
         return $this;
     }
@@ -420,14 +420,14 @@ class Builder extends Relationship {
         // Here we will make some assumptions about the operator. If only 2 values are
         // passed to the method, we will assume that the operator is an equals sign
         // and keep going. Otherwise, we'll require the operator to be passed in.
-        [$value, $operator] = $this->prepareValueAndOperator(
+        [$value, $operator] = $this->prepare_value_and_operator(
             $value, $operator, func_num_args() === 2
         );
 
         // If the given operator is not found in the list of valid operators we will
         // assume that the developer is just short-cutting the '=' operators and
         // we will set the operators to '=' and set the values appropriately.
-        if ( $this->invalidOperator( $operator ) ) {
+        if ( $this->invalid_operator( $operator ) ) {
             [$value, $operator] = [$operator, '='];
         }
 
@@ -450,7 +450,7 @@ class Builder extends Relationship {
      * @param  string  $boolean
      * @return $this
      */
-    public function orHaving( $column, $operator = null, $value = null ) {   
+    public function or_having( $column, $operator = null, $value = null ) {   
         return $this->having( $column, $operator, $value, 'or' );
     }
 
@@ -461,7 +461,7 @@ class Builder extends Relationship {
      * @param  string  $direction
      * @return $this
      */
-    public function orderBy( $column, $direction = 'asc' ) {
+    public function order_by( $column, $direction = 'asc' ) {
         $direction = strtolower( $direction );
 
         if ( ! in_array( $direction, ['asc', 'desc'], true ) ) {
@@ -479,8 +479,8 @@ class Builder extends Relationship {
      * Add a descending "order by" clause to the query.
      * @return $this
      */
-    public function orderByDesc( $column ) {
-        return $this->orderBy( $column, 'desc' );
+    public function order_by_desc( $column ) {
+        return $this->order_by( $column, 'desc' );
     }
 
     /**
@@ -742,10 +742,10 @@ class Builder extends Relationship {
      *
      * @throws InvalidArgumentException
      */
-    protected function prepareValueAndOperator( $value, $operator, $use_default = false ) {
+    protected function prepare_value_and_operator( $value, $operator, $use_default = false ) {
         if ( $use_default ) {
             return [$operator, '='];
-        } elseif ( $this->invalidOperatorAndValue( $operator, $value ) ) {
+        } elseif ( $this->invalid_operatorAndValue( $operator, $value ) ) {
             throw new InvalidArgumentException( 'Illegal operator and value combination.' );
         }
 
@@ -761,7 +761,7 @@ class Builder extends Relationship {
      * @param  mixed  $value
      * @return bool
      */
-    protected function invalidOperatorAndValue( $operator, $value ) {
+    protected function invalid_operatorAndValue( $operator, $value ) {
         return is_null( $value ) && in_array( $operator, $this->operators ) &&
              ! in_array( $operator, ['=', '<>', '!='] );
     }
@@ -772,7 +772,7 @@ class Builder extends Relationship {
     * @param  string  $operator
     * @return bool
     */
-    protected function invalidOperator( $operator ) {
+    protected function invalid_operator( $operator ) {
         return ! is_string( $operator ) || ! in_array( strtolower( $operator ), $this->operators, true );
     }
 }
