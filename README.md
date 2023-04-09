@@ -13,6 +13,7 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 - [Create Eloquent Model](#create-eloquent-model)
 - [Insert Data](#insert-data)
 - [Update Data](#update-data)
+- [Delete Data](#delete-data)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -80,9 +81,14 @@ $post_id = Post::query()->insert_get_id([
 ]);
 ```
 # Update Data
-
+To update a post where the post id is 100, use the following code:
 ```php
 Post::query()->where('post_id', 100)->update([
 	'post_title' => "Test Post"
 ]);
+```
+# Delete Data
+To delete a post where the post id is 100, use the following code:
+```php
+Post::query()->where('post_id', 100)->delete();
 ```
