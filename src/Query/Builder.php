@@ -169,125 +169,6 @@ class Builder extends Relationship {
     }
 
     /**
-     * Get the SQL representation of the query.
-     *
-     * @return string
-     */
-    public function toSql() {
-        $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileSelect( $this ) );
-    }
-    
-    /**
-     * Get the SQL representation of the query.
-     *
-     * @return string
-     */
-    public function toSqlUpdate( array $values ) {
-        $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileUpdate( $this, $values ) );
-    }
-
-    /**
-     * Get the SQL representation of the query.
-     *
-     * @return string
-     */
-    public function toSqlDelete() {
-        $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileDelete( $this ) );
-    }
-    
-    /**
-     * Delete records from the database.
-     *
-     * @return mixed
-     */
-    public function delete() {
-        global $wpdb;
-        return $wpdb->query( $this->toSqlDelete() );
-    }
-
-     /**
-     * Insert new records into the database.
-     *
-     * @param  array  $values
-     * @return string
-     */
-    public function toSqlInsert( array $values ) {
-        $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileInsert( $this, $values ) );
-    }
-
-    protected function bindValues( string $sql ) {
-        global $wpdb;
-        /**
-         * @var wpdb $wpdb
-         */
-        return $wpdb->prepare( $sql, ...$this->bindings );
-    }
-
-    public function get() {
-        global $wpdb;
-        /**
-         * @var wpdb $wpdb
-         */
-        return $this->processRelationships( $wpdb->get_results( $this->toSql() ), $this->relations, $this->model );
-    }
-
-    public function first() {
-        $data = $this->limit( 1 )->get();
-        return isset( $data[0] ) ? $data[0] : null;
-    }
-
-    /**
-     * Insert new records into the database.
-     *
-     * @param  array  $values
-     * @return bool|integer
-     */
-    public function insert( array $values ) {
-        $sql = $this->toSqlInsert( $values );
-        global $wpdb;
-        return $wpdb->query( $sql );
-    }
-
-    /**
-     * Insert new single record into the database and get id.
-     *
-     * @param  array  $values
-     */
-    public function insertGetId( array $values ) {
-        $this->insert( $values );
-        global $wpdb;
-        return $wpdb->insert_id;
-    }
-
-    /**
-     * Update records in the database.
-     *
-     * @param array $values
-     * @return integer
-     */
-    public function update( array $values ) {
-        $sql = $this->toSqlUpdate( $values );
-        global $wpdb;
-        $result = $wpdb->query( $sql );
-        return $result;
-    }
-
-    /**
-     * Set the "limit" value of the query.
-     *
-     * @param  int  $value
-     * @return $this
-     */
-    public function limit( int $value ) {
-        $this->limit = max( 1, $value );
-        return $this;
-    }
-
-    /**
      * Set the relationships that should be eager loaded.
      *
      * @param  string|array  $relations
@@ -319,6 +200,57 @@ class Builder extends Relationship {
         }
 
         return $this;
+    }
+
+     /**
+     * Add a join clause to the query.
+     *
+     * @param  string  $table
+     * @param  Closure|string  $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @param  string  $type
+     * @param  bool  $where
+     * @return $this
+     */
+    public function join( $table, $first, $operator = null, $second = null, $type = 'inner' ) {
+
+        $join = new JoinClause( $table, $type, $this->model );
+
+        if ( $first instanceof Closure ) {
+            call_user_func( $first, $join );
+        } else {
+            $join->where( $first, $operator, $second );
+        }
+
+        $this->joins[] = $join;
+        return $this;
+    }
+
+    /**
+     * Add a left join to the query.
+     *
+     * @param  string  $table
+     * @param  Closure|string  $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @return $this
+     */
+    public function leftJoin( $table, $first, $operator = null, $second = null ) {
+        return $this->join( $table, $first, $operator, $second, 'left' );
+    }
+
+    /**
+     * Add a right join to the query.
+     *
+     * @param  string  $table
+     * @param  Closure|string  $first
+     * @param  string|null  $operator
+     * @param  string|null  $second
+     * @return $this
+     */
+    public function rightJoin( $table, $first, $operator = null, $second = null ) {
+        return $this->join( $table, $first, $operator, $second, 'right' );
     }
 
     /**
@@ -435,28 +367,43 @@ class Builder extends Relationship {
         return $this->whereIn( $column, $values, $boolean, true );
     }
 
-     /**
-     * Add a join clause to the query.
+    /**
+     * Add a where between statement to the query.
      *
-     * @param  string  $table
-     * @param  Closure|string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
-     * @param  string  $type
-     * @param  bool  $where
+     * @param  string  $column
+     * @param  array  $values
+     * @param  string  $boolean
+     * @param  bool  $not
      * @return $this
      */
-    public function join( $table, $first, $operator = null, $second = null, $type = 'inner' ) {
+    public function whereBetween( $column, array $values, $boolean = 'and', $not = false ) {
+        $type = 'between';
 
-        $join = new JoinClause( $table, $type, $this->model );
+        $this->wheres[] = compact( 'type', 'boolean', 'column', 'values', 'not' );
 
-        if ( $first instanceof Closure ) {
-            call_user_func( $first, $join );
-        } else {
-            $join->where( $first, $operator, $second );
-        }
+        return $this;
+    }
 
-        $this->joins[] = $join;
+    /**
+     * Add a where not between statement to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @param  string  $boolean
+     * @return $this
+     */
+    public function whereNotBetween( $column, array $values, $boolean = 'and' ) {
+        return $this->whereBetween( $column, $values, $boolean, true );
+    }
+
+    /**
+     * Add a "group by" clause to the query.
+     *
+     * @param  array|string  ...$groups
+     * @return $this
+     */
+    public function groupBy( ...$groups ) {
+        $this->groups = $groups;
         return $this;
     }
 
@@ -494,93 +441,17 @@ class Builder extends Relationship {
         return $this;
     }
 
-    /**
-     * Add a left join to the query.
-     *
-     * @param  string  $table
-     * @param  Closure|string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
-     * @return $this
-     */
-    public function leftJoin( $table, $first, $operator = null, $second = null ) {
-        return $this->join( $table, $first, $operator, $second, 'left' );
-    }
-
-    /**
-     * Undocumented function
-     *
-     * @param mixed $value
-     * @return string
-     */
-    public function setBinding( $value ) {
-        $this->bindings[] = $value;
-
-        $type = gettype( $value );
-
-        if ( 'integer' === $type || 'boolean' === $type ) {
-            return '%d';
-        }
-
-        if ( 'double' === $type ) {
-            return '%f';
-        }
-
-        return '%s';
-    }
-
      /**
-     * Add a right join to the query.
-     *
-     * @param  string  $table
-     * @param  Closure|string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
-     * @return $this
-     */
-    public function rightJoin( $table, $first, $operator = null, $second = null ) {
-        return $this->join( $table, $first, $operator, $second, 'right' );
-    }
-
-     /**
-     * Add a where between statement to the query.
+     * Add a "or having" clause to the query.
      *
      * @param  string  $column
-     * @param  array  $values
-     * @param  string  $boolean
-     * @param  bool  $not
-     * @return $this
-     */
-    public function whereBetween( $column, array $values, $boolean = 'and', $not = false ) {
-        $type = 'between';
-
-        $this->wheres[] = compact( 'type', 'boolean', 'column', 'values', 'not' );
-
-        return $this;
-    }
-
-    /**
-     * Add a where not between statement to the query.
-     *
-     * @param  string  $column
-     * @param  array  $values
+     * @param  string|null  $operator
+     * @param  string|null  $value
      * @param  string  $boolean
      * @return $this
      */
-    public function whereNotBetween( $column, array $values, $boolean = 'and' ) {
-        return $this->whereBetween( $column, $values, $boolean, true );
-    }
-
-    /**
-     * Add a "group by" clause to the query.
-     *
-     * @param  array|string  ...$groups
-     * @return $this
-     */
-    public function groupBy( ...$groups ) {
-        $this->groups = $groups;
-
-        return $this;
+    public function orHaving( $column, $operator = null, $value = null ) {   
+        return $this->having( $column, $operator, $value, 'or' );
     }
 
     /**
@@ -622,7 +493,166 @@ class Builder extends Relationship {
         $this->offset = max( 0, $value );
         return $this;
     }
+
+    /**
+     * Set the "limit" value of the query.
+     *
+     * @param  int  $value
+     * @return $this
+     */
+    public function limit( int $value ) {
+        $this->limit = max( 1, $value );
+        return $this;
+    }
+
+    /**
+     * Get the SQL representation of the query.
+     *
+     * @return string
+     */
+    public function toSql() {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileSelect( $this ) );
+    }
+
+    /**
+     * Insert new records into the database.
+     *
+     * @param  array  $values
+     * @return string
+     */
+    public function toSqlInsert( array $values ) {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileInsert( $this, $values ) );
+    }
+
+    /**
+     * Get the SQL representation of the query.
+     *
+     * @return string
+     */
+    public function toSqlUpdate( array $values ) {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileUpdate( $this, $values ) );
+    }
+
+    /**
+     * Get the SQL representation of the query.
+     *
+     * @return string
+     */
+    public function toSqlDelete() {
+        $compiler = new Compiler;
+        return $this->bindValues( $compiler->compileDelete( $this ) );
+    }
+
+    public function get() {
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        return $this->processRelationships( $wpdb->get_results( $this->toSql() ), $this->relations, $this->model );
+    }
     
+    public function first() {
+        $data = $this->limit( 1 )->get();
+        return isset( $data[0] ) ? $data[0] : null;
+    }
+
+    /**
+     * Insert new records into the database.
+     *
+     * @param  array  $values
+     * @return bool|integer
+     */
+    public function insert( array $values ) {
+        $sql = $this->toSqlInsert( $values );
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        return $wpdb->query( $sql );
+    }
+
+    /**
+     * Insert new single record into the database and get id.
+     *
+     * @param  array  $values
+     */
+    public function insertGetId( array $values ) {
+        $this->insert( $values );
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        return $wpdb->insert_id;
+    }
+    
+    /**
+     * Update records in the database.
+     *
+     * @param array $values
+     * @return integer
+     */
+    public function update( array $values ) {
+        $sql = $this->toSqlUpdate( $values );
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        $result = $wpdb->query( $sql );
+        return $result;
+    }
+
+    /**
+     * Delete records from the database.
+     *
+     * @return mixed
+     */
+    public function delete() {
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        return $wpdb->query( $this->toSqlDelete() );
+    }
+
+    /**
+     * Prepare Query Values
+     *
+     * @param string $sql
+     * @return string
+     */
+    protected function bindValues( string $sql ) {
+        global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
+        return $wpdb->prepare( $sql, ...$this->bindings );
+    }
+
+    /**
+     * Set query values for the using wpdb::prepare
+     *
+     * @param mixed $value
+     * @return string
+     */
+    public function setBinding( $value ) {
+        $this->bindings[] = $value;
+
+        $type = gettype( $value );
+
+        if ( 'integer' === $type || 'boolean' === $type ) {
+            return '%d';
+        }
+
+        if ( 'double' === $type ) {
+            return '%f';
+        }
+
+        return '%s';
+    }
+
     public function aggregate( $function, $columns = ['*'] ) {
         $results = $this->setAggregate( $function, $columns )->get();
         return (int) $results[0]->aggregate;

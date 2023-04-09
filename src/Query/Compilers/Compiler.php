@@ -35,42 +35,6 @@ class Compiler {
     }
 
     /**
-     * Compile an update statement into SQL.
-     *
-     * @param  \WaxFramework\Database\Query\Builder $query
-     * @param  array  $values
-     * @return string
-     */
-    public function compileUpdate( Builder $query, array $values ) {
-
-        $keys = array_keys( $values );
-
-        $columns = implode(
-            ', ', array_map(
-                function( $value, $key ) use( $query ){
-                        return $key . ' = ' . $query->setBinding( $value );
-                }, $values, $keys
-            )
-        );
-
-        $where = $this->compileWheres( $query );
-
-        return "update {$query->from} set {$columns} {$where}";
-    }
-
-    /**
-     * Compile a delete statement into SQL.
-     *
-     * @param  \WaxFramework\Database\Query\Builder $query
-     * @return string
-     */
-    public function compileDelete( Builder $query ) {
-        $where = $this->compileWheres( $query );
-        
-        return "delete from {$query->from} {$where}";
-    }
-
-    /**
      * Compile an insert statement into SQL.
      *
      * @param  \WaxFramework\Database\Query\Builder $query
@@ -110,6 +74,42 @@ class Compiler {
     }
 
     /**
+     * Compile an update statement into SQL.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  array  $values
+     * @return string
+     */
+    public function compileUpdate( Builder $query, array $values ) {
+
+        $keys = array_keys( $values );
+
+        $columns = implode(
+            ', ', array_map(
+                function( $value, $key ) use( $query ){
+                        return $key . ' = ' . $query->setBinding( $value );
+                }, $values, $keys
+            )
+        );
+
+        $where = $this->compileWheres( $query );
+
+        return "update {$query->from} set {$columns} {$where}";
+    }
+
+    /**
+     * Compile a delete statement into SQL.
+     *
+     * @param  \WaxFramework\Database\Query\Builder $query
+     * @return string
+     */
+    public function compileDelete( Builder $query ) {
+        $where = $this->compileWheres( $query );
+        
+        return "delete from {$query->from} {$where}";
+    }
+
+    /**
      * Compile the components necessary for a select clause.
      *
      * @param  \WaxFramework\Database\Query\Builder  $query
@@ -136,9 +136,6 @@ class Compiler {
      * @return string|null
      */
     protected function compileColumns( Builder $query, $columns ) {
-        // If the query is actually performing an aggregating select, we will let that
-        // compiler handle the building of the select clauses, as it will need some
-        // more syntax that is best handled by that function to keep things neat.
         if ( ! is_null( $query->aggregate ) ) {
             return;
         }

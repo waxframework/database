@@ -12,17 +12,18 @@ use WaxFramework\Database\Resolver;
 abstract class Model {
     abstract static function get_table_name():string;
 
+    abstract public function resolver():Resolver;
+
     /**
      * Begin querying the model.
      *
      * @return \WaxFramework\Database\Query\Builder
      */
     public static function query( $as = null ) {
-        $model    = new static;
-        $builder  = new Builder( $model );
-        $resolver = new Resolver;
+        $model   = new static;
+        $builder = new Builder( $model );
 
-        $builder->from( $resolver->table( static::get_table_name() ), $as );
+        $builder->from( $model->resolver()->table( static::get_table_name() ), $as );
 
         return $builder;
     }
@@ -35,7 +36,7 @@ abstract class Model {
      * @param  string $localKey
      * @return \WaxFramework\Database\Eloquent\Relations\HasMany
      */
-    public function hasMany( string $related, string $foreignKey, string $localKey ) {
+    public function has_many( string $related, string $foreignKey, string $localKey ) {
         return new HasMany( $related, $foreignKey, $localKey );
     }
 

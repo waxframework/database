@@ -1,6 +1,7 @@
 <?php
 
 namespace WaxFramework\Database\Query;
+
 use WaxFramework\Database\Eloquent\Model;
 
 class JoinClause extends Builder

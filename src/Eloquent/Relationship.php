@@ -4,15 +4,13 @@ namespace WaxFramework\Database\Eloquent;
 
 use WaxFramework\Database\Eloquent\Relations\BelongsToOne;
 use WaxFramework\Database\Eloquent\Relations\HasOne;
-use WaxFramework\Database\Resolver;
+use wpdb;
 
 class Relationship {
     protected function processRelationships( $parentItems, array $relations, Model $model ) {
         if ( empty( $relations ) ) {
             return $parentItems;
         }
-
-        $resolver = new Resolver;
 
         foreach ( $relations as $key => $relation ) {
             /**
@@ -29,15 +27,15 @@ class Relationship {
              * @var \WaxFramework\Database\Query\Builder $query 
              */
             $query = $relation['query'];
-
-            $tableName = $resolver->table( $related::get_table_name() );
+            
+            $tableName = $related->resolver()->table( $related::get_table_name() );
 
             $query->from( $tableName )->whereIn( $tableName . '.' . $relationship->foreignKey, array_column( $parentItems, $relationship->localKey ) );
 
             global $wpdb;
 
             /**
-             * @var \wpdb $wpdb
+             * @var wpdb $wpdb
              */
             $results = $wpdb->get_results( $query->toSql() );
 
