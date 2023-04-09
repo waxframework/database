@@ -18,12 +18,14 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 	- [get()](#get)
 	- [where()](#where)
 	- [where\_in()](#where_in)
-	- [limit()](#limit)
 	- [first()](#first)
 	- [order\_by()](#order_by)
 	- [order\_by\_desc()](#order_by_desc)
 	- [group\_by()](#group_by)
+	- [where\_between()](#where_between)
 	- [where\_exists() and where\_column()](#where_exists-and-where_column)
+	- [the group\_by and having Methods](#the-group_by-and-having-methods)
+	- [The limit \& offset Methods](#the-limit--offset-methods)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -124,11 +126,6 @@ To get posts by given ids, use the `where_in` method as shown below:
 ```php
 $posts = Post::query()->where_in('ID', [100, 105])->get();
 ```
-## limit()
-To limit the number of posts retrieved, use the `limit` method as shown below:
-```php
-$posts = Post::query()->where('post_status', 'publish')->limit(10)->get();
-```
 ## first()
 To retrieve a single record from the database, use the `first` method as shown below:
 ```php
@@ -151,6 +148,12 @@ Group the posts by post_author column using `group_by` method
 
 ```php
 $posts = Post::query()->group_by('post_author')->get();
+
+```
+## where_between()
+The `where_between` method verifies that a column's value is between two values:
+```php
+$posts = Post::query()->where_between('ID', [1, 100])->get();
 ```
 ## where_exists() and where_column()
 The `where_exists` and `where_column` methods are useful when you need to retrieve data from two different tables that have a common column.
@@ -170,3 +173,18 @@ To get all posts if the post has meta data, you can use either of the following 
 	$posts     = Post::query()->where_exists($post_meta)->get();
 	```
 In both of these processes, we use the `where_column` method to specify the column names in the two tables that should be compared. This allows us to filter the posts based on whether or not they have meta data.
+
+## the group_by and having Methods
+As you might expect, the `group_by` and `having` methods may be used to group the query results. The `having` method's signature is similar to that of the `where` method:
+
+```php
+$posts = Post::query()->group_by('post_author')->having('post_author', '>', 100)->get();
+```
+
+## The limit & offset Methods
+
+You may use the `limit` and `offset` methods to limit the number of results returned from the query or to skip a given number of results in the query:
+
+```php
+$posts = Post::query()->offset(10)->limit(5)->get();
+```
