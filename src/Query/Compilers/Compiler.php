@@ -11,7 +11,7 @@ class Compiler {
      *
      * @var string[]
      */
-    protected $selectComponents = [
+    protected $select_components = [
         'aggregate',
         'columns',
         'from',
@@ -30,8 +30,8 @@ class Compiler {
      * @param  \WaxFramework\Database\Query\Builder $query
      * @return string
      */
-    public function compileSelect( Builder $query ) {
-        return $this->concatenate( $this->compileComponents( $query ) );
+    public function compile_select( Builder $query ) {
+        return $this->concatenate( $this->compile_components( $query ) );
     }
 
     /**
@@ -41,7 +41,7 @@ class Compiler {
      * @param  array  $values
      * @return string
      */
-    public function compileInsert( Builder $query, array $values ) {
+    public function compile_insert( Builder $query, array $values ) {
         if ( ! is_array( reset( $values ) ) ) {
             $values = [$values];
         } else {
@@ -60,7 +60,7 @@ class Compiler {
                     return '(' . implode(
                         ', ', array_map(
                             function( $item ) use( $query ) {
-                                return $query->setBinding( $item );
+                                return $query->set_binding( $item );
                             }, $record
                         ) 
                     ) . ')';
@@ -80,19 +80,19 @@ class Compiler {
      * @param  array  $values
      * @return string
      */
-    public function compileUpdate( Builder $query, array $values ) {
+    public function compile_update( Builder $query, array $values ) {
 
         $keys = array_keys( $values );
 
         $columns = implode(
             ', ', array_map(
                 function( $value, $key ) use( $query ){
-                        return $key . ' = ' . $query->setBinding( $value );
+                        return $key . ' = ' . $query->set_binding( $value );
                 }, $values, $keys
             )
         );
 
-        $where = $this->compileWheres( $query );
+        $where = $this->compile_wheres( $query );
 
         return "update {$query->from} set {$columns} {$where}";
     }
@@ -103,8 +103,8 @@ class Compiler {
      * @param  \WaxFramework\Database\Query\Builder $query
      * @return string
      */
-    public function compileDelete( Builder $query ) {
-        $where = $this->compileWheres( $query );
+    public function compile_delete( Builder $query ) {
+        $where = $this->compile_wheres( $query );
         
         return "delete from {$query->from} {$where}";
     }
@@ -115,12 +115,12 @@ class Compiler {
      * @param  \WaxFramework\Database\Query\Builder  $query
      * @return array
      */
-    protected function compileComponents( Builder $query ) {
+    protected function compile_components( Builder $query ) {
         $sql = [];
 
-        foreach ( $this->selectComponents as $component ) {
+        foreach ( $this->select_components as $component ) {
             if ( isset( $query->$component ) ) {
-                $method          = 'compile' . ucfirst( $component );
+                $method          = 'compile_' . $component;
                 $sql[$component] = $this->$method( $query, $query->$component );
             }
         }
@@ -135,7 +135,7 @@ class Compiler {
      * @param  array  $columns
      * @return string|null
      */
-    protected function compileColumns( Builder $query, $columns ) {
+    protected function compile_columns( Builder $query, $columns ) {
         if ( ! is_null( $query->aggregate ) ) {
             return;
         }
@@ -156,7 +156,7 @@ class Compiler {
      * @param  array  $aggregate
      * @return string
      */
-    protected function compileAggregate( Builder $query, $aggregate ) {
+    protected function compile_aggregate( Builder $query, $aggregate ) {
         $column = $this->columnize( $query->aggregate['columns'] );
         
         if ( $query->distinct ) {
@@ -173,7 +173,7 @@ class Compiler {
      * @param string $table
      * @return string
      */
-    protected function compileFrom( Builder $query, $table ) {
+    protected function compile_from( Builder $query, $table ) {
         if ( is_null( $query->as ) ) {
             return 'from ' . $table;
         }
@@ -186,7 +186,7 @@ class Compiler {
      * @param  \WaxFramework\Database\Query\Builder  $query
      * @return string
      */
-    public function compileWheres( Builder $query ) {
+    public function compile_wheres( Builder $query ) {
         if ( empty( $query->wheres ) ) {
             return '';
         }
@@ -197,27 +197,27 @@ class Compiler {
             $where_query = "where";
         }
 
-        return $this->compileWhereOrHaving( $query, $query->wheres, $where_query );
+        return $this->compile_where_or_having( $query, $query->wheres, $where_query );
     }
 
-    protected function compileWhereOrHaving( Builder $query, array $items, string $type = 'where' ) {
+    protected function compile_where_or_having( Builder $query, array $items, string $type = 'where' ) {
         $where_query = $type;
 
         foreach ( $items as $where ) {
             switch ( $where['type'] ) {
                 case 'basic':
-                    $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$query->setBinding($where['value'])}";
+                    $where_query .= " {$where['boolean']} {$where['column']} {$where['operator']} {$query->set_binding($where['value'])}";
                     break;
                 case 'between':
                     $between      = $where['not'] ? 'not between' : 'between';
-                    $where_query .= " {$where['boolean']} {$where['column']} {$between} {$query->setBinding($where['values'][0])} and {$query->setBinding($where['values'][1])}";
+                    $where_query .= " {$where['boolean']} {$where['column']} {$between} {$query->set_binding($where['values'][0])} and {$query->set_binding($where['values'][1])}";
                     break;
                 case 'in':
                     $in           = $where['not'] ? 'not in' : 'in';
                     $values       = implode(
                         ', ', array_map(
                             function( $value ) use( $query ) {
-                                return $query->setBinding( $value );
+                                return $query->set_binding( $value );
                             }, $where['values']
                         ) 
                     );
@@ -228,14 +228,14 @@ class Compiler {
                      * @var Builder $query
                      */
                     $query = $where['query'];
-                    $sql   = $query->toSql();
+                    $sql   = $query->to_sql();
 
                     $exists       = $where['not'] ? 'not exists' : 'exists';
                     $where_query .= " {$where['boolean']} {$exists} ({$sql})";
             }
         }
 
-        return $this->removeLeadingBoolean( $where_query );
+        return $this->remove_leading_boolean( $where_query );
     }
 
      /**
@@ -245,16 +245,16 @@ class Compiler {
      * @param  array  $joins
      * @return string
      */
-    protected function compileJoins( Builder $query, $joins ) {
+    protected function compile_joins( Builder $query, $joins ) {
         return implode(
             ' ', array_map(
                 function( JoinClause $join ) use( $query ) {
                     if ( is_null( $join->joins ) ) {
-                        $tableAndNestedJoins = $join->table;
+                        $table_and_nested_joins = $join->table;
                     } else {
-                        $tableAndNestedJoins = '(' . $join->table . ' ' . $this->compileJoins( $query, $join->joins ) . ')';
+                        $table_and_nested_joins = '(' . $join->table . ' ' . $this->compile_joins( $query, $join->joins ) . ')';
                     }
-                    return trim( "{$join->type} join {$tableAndNestedJoins} {$this->compileWheres($join)}" );
+                    return trim( "{$join->type} join {$table_and_nested_joins} {$this->compile_wheres($join)}" );
                 }, $joins
             )
         );
@@ -267,7 +267,7 @@ class Compiler {
      * @param  array  $orders
      * @return string
      */
-    protected function compileOrders( Builder $query, $orders ) {
+    protected function compile_orders( Builder $query, $orders ) {
         if ( empty( $orders ) ) {
             return '';
         }
@@ -287,11 +287,11 @@ class Compiler {
      * @param  \WaxFramework\Database\Query\Builder $query
      * @return string
      */
-    protected function compileHavings( Builder $query ) {
+    protected function compile_havings( Builder $query ) {
         if ( empty( $query->havings ) ) {
             return '';
         }
-        return $this->compileWhereOrHaving( $query, $query->havings, 'having' );
+        return $this->compile_where_or_having( $query, $query->havings, 'having' );
     }
 
     /**
@@ -301,8 +301,8 @@ class Compiler {
      * @param  int  $offset
      * @return string
      */
-    protected function compileOffset( Builder $query, $offset ) {
-        return 'offset ' . $query->setBinding( $offset );
+    protected function compile_offset( Builder $query, $offset ) {
+        return 'offset ' . $query->set_binding( $offset );
     }
 
     /**
@@ -312,8 +312,8 @@ class Compiler {
      * @param  int  $limit
      * @return string
      */
-    protected function compileLimit( Builder $query, $limit ) {
-        return 'limit ' . $query->setBinding( $limit );
+    protected function compile_limit( Builder $query, $limit ) {
+        return 'limit ' . $query->set_binding( $limit );
     }
 
      /**
@@ -323,7 +323,7 @@ class Compiler {
      * @param array $groups
      * @return string
      */
-    protected function compileGroups( Builder $query, $groups ) {
+    protected function compile_groups( Builder $query, $groups ) {
         return 'group by ' . implode( ', ', $groups );
     }
 
@@ -359,7 +359,7 @@ class Compiler {
      * @param  string  $value
      * @return string
      */
-    protected function removeLeadingBoolean( $value ) {
+    protected function remove_leading_boolean( $value ) {
         return preg_replace( '/and |or /i', '', $value, 1 );
     }
 }

@@ -32,47 +32,47 @@ abstract class Model {
      * Define a one-to-many relationship.
      *
      * @param  string $related
-     * @param  string $foreignKey
-     * @param  string $localKey
+     * @param  string $foreign_key
+     * @param  string $local_key
      * @return \WaxFramework\Database\Eloquent\Relations\HasMany
      */
-    public function has_many( string $related, string $foreignKey, string $localKey ) {
-        return new HasMany( $related, $foreignKey, $localKey );
+    public function has_many( string $related, string $foreign_key, string $local_key ) {
+        return new HasMany( $related, $foreign_key, $local_key );
     }
 
     /**
      * Define a one-to-many relationship.
      *
      * @param  string $related
-     * @param  string  $foreignKey
-     * @param  string  $localKey
+     * @param  string  $foreign_key
+     * @param  string  $local_key
      * @return \WaxFramework\Database\Eloquent\Relations\HasOne
      */
-    public function hasOne( $related, $foreignKey, $localKey ) {
-        return new HasOne( $related, $foreignKey, $localKey );
+    public function has_one( $related, $foreign_key, $local_key ) {
+        return new HasOne( $related, $foreign_key, $local_key );
     }
 
     /**
      * Define an inverse one-to-one relationship.
      *
      * @param  string $related
-     * @param  string  $foreignKey
-     * @param  string  $localKey
+     * @param  string  $foreign_key
+     * @param  string  $local_key
      * @return \WaxFramework\Database\Eloquent\Relations\BelongsToOne
      */
-    public function belongsToOne( $related, $foreignKey, $localKey ) {
-        return new BelongsToOne( $related, $foreignKey, $localKey );
+    public function belongs_to_one( $related, $foreign_key, $local_key ) {
+        return new BelongsToOne( $related, $foreign_key, $local_key );
     }
 
     /**
      * Define an inverse many-to-many relationship.
      *
      * @param  string $related
-     * @param  string  $foreignKey
-     * @param  string  $localKey
+     * @param  string  $foreign_key
+     * @param  string  $local_key
      * @return \WaxFramework\Database\Eloquent\Relations\BelongsToMany
      */
-    public function belongsToMany( $related, $foreignKey, $localKey ) {
-        return new BelongsToMany( $related, $foreignKey, $localKey );
+    public function belongs_to_many( $related, $foreign_key, $local_key ) {
+        return new BelongsToMany( $related, $foreign_key, $local_key );
     }
 }

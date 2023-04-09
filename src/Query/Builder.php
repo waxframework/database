@@ -510,9 +510,9 @@ class Builder extends Relationship {
      *
      * @return string
      */
-    public function toSql() {
+    public function to_sql() {
         $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileSelect( $this ) );
+        return $this->bind_values( $compiler->compile_select( $this ) );
     }
 
     /**
@@ -521,9 +521,9 @@ class Builder extends Relationship {
      * @param  array  $values
      * @return string
      */
-    public function toSqlInsert( array $values ) {
+    public function to_sql_insert( array $values ) {
         $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileInsert( $this, $values ) );
+        return $this->bind_values( $compiler->compile_insert( $this, $values ) );
     }
 
     /**
@@ -531,9 +531,9 @@ class Builder extends Relationship {
      *
      * @return string
      */
-    public function toSqlUpdate( array $values ) {
+    public function to_sql_update( array $values ) {
         $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileUpdate( $this, $values ) );
+        return $this->bind_values( $compiler->compile_update( $this, $values ) );
     }
 
     /**
@@ -541,9 +541,9 @@ class Builder extends Relationship {
      *
      * @return string
      */
-    public function toSqlDelete() {
+    public function to_sql_delete() {
         $compiler = new Compiler;
-        return $this->bindValues( $compiler->compileDelete( $this ) );
+        return $this->bind_values( $compiler->compile_delete( $this ) );
     }
 
     public function get() {
@@ -551,7 +551,8 @@ class Builder extends Relationship {
         /**
          * @var wpdb $wpdb
          */
-        return $this->processRelationships( $wpdb->get_results( $this->toSql() ), $this->relations, $this->model );
+        //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        return $this->process_relationships( $wpdb->get_results( $this->to_sql() ), $this->relations, $this->model );
     }
     
     public function first() {
@@ -566,11 +567,12 @@ class Builder extends Relationship {
      * @return bool|integer
      */
     public function insert( array $values ) {
-        $sql = $this->toSqlInsert( $values );
+        $sql = $this->to_sql_insert( $values );
         global $wpdb;
         /**
          * @var wpdb $wpdb
          */
+        //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         return $wpdb->query( $sql );
     }
 
@@ -595,11 +597,12 @@ class Builder extends Relationship {
      * @return integer
      */
     public function update( array $values ) {
-        $sql = $this->toSqlUpdate( $values );
+        $sql = $this->to_sql_update( $values );
         global $wpdb;
         /**
          * @var wpdb $wpdb
          */
+        //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         $result = $wpdb->query( $sql );
         return $result;
     }
@@ -614,7 +617,8 @@ class Builder extends Relationship {
         /**
          * @var wpdb $wpdb
          */
-        return $wpdb->query( $this->toSqlDelete() );
+        //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+        return $wpdb->query( $this->to_sql_delete() );
     }
 
     /**
@@ -623,11 +627,12 @@ class Builder extends Relationship {
      * @param string $sql
      * @return string
      */
-    protected function bindValues( string $sql ) {
+    protected function bind_values( string $sql ) {
         global $wpdb;
         /**
          * @var wpdb $wpdb
          */
+        //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         return $wpdb->prepare( $sql, ...$this->bindings );
     }
 
@@ -637,7 +642,7 @@ class Builder extends Relationship {
      * @param mixed $value
      * @return string
      */
-    public function setBinding( $value ) {
+    public function set_binding( $value ) {
         $this->bindings[] = $value;
 
         $type = gettype( $value );
@@ -732,13 +737,13 @@ class Builder extends Relationship {
      *
      * @param  string  $value
      * @param  string  $operator
-     * @param  bool  $useDefault
+     * @param  bool  $use_default
      * @return array
      *
      * @throws InvalidArgumentException
      */
-    protected function prepareValueAndOperator( $value, $operator, $useDefault = false ) {
-        if ( $useDefault ) {
+    protected function prepareValueAndOperator( $value, $operator, $use_default = false ) {
+        if ( $use_default ) {
             return [$operator, '='];
         } elseif ( $this->invalidOperatorAndValue( $operator, $value ) ) {
             throw new InvalidArgumentException( 'Illegal operator and value combination.' );

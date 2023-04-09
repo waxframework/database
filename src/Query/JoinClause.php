@@ -4,8 +4,7 @@ namespace WaxFramework\Database\Query;
 
 use WaxFramework\Database\Eloquent\Model;
 
-class JoinClause extends Builder
-{
+class JoinClause extends Builder {
     /**
      * The type of join being performed.
      *
