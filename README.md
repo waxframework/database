@@ -23,6 +23,7 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 	- [Join](#join)
 		- [Inner Join Clause](#inner-join-clause)
 		- [Left Join / Right Join Clause](#left-join--right-join-clause)
+		- [Advanced Join Clauses](#advanced-join-clauses)
 	- [Basic Where Clauses](#basic-where-clauses)
 		- [Where Clauses](#where-clauses)
 		- [Or Where Clauses](#or-where-clauses)
@@ -202,6 +203,21 @@ $users = User::query()
 ```
 This will return all the rows from the `posts` table along with their matching rows from the `users` table based on the `user_id` column. If a post has no matching user, the values from the `users` table will be NULL.
 
+### Advanced Join Clauses
+You may also specify more advanced join clauses. To get started, pass a closure as the second argument to the `join` method. The closure will receive a `WaxFramework\Database\Query\JoinClause` instance which allows you to specify constraints on the "join" clause:
+```php
+use WaxFramework\Database\Query\JoinClause;
+
+$posts = Post::query()->join('postmeta', function (JoinClause $join) {
+	$join->on('postmeta.post_id', '=', 'posts.ID')->orOn(/* ... */);
+})->get();
+```
+If you would like to use a "where" clause on your joins, you may use the `where` and `or_where` methods provided by the JoinClause instance. Instead of comparing two columns, these methods will compare the column against a value:
+```php
+$posts = Post::query()->join('postmeta', function (JoinClause $join) {
+	$join->on('postmeta.post_id', '=', 'posts.ID')->where('postmeta.meta_value', '>', 500);
+})->get();
+```
 ## Basic Where Clauses
 
 ### Where Clauses

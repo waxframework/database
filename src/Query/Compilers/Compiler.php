@@ -251,13 +251,13 @@ class Compiler {
     protected function compile_joins( Builder $query, $joins ) {
         return implode(
             ' ', array_map(
-                function( JoinClause $join ) use( $query ) {
-                    if ( is_null( $join->joins ) ) {
-                        $table_and_nested_joins = $join->table;
-                    } else {
-                        $table_and_nested_joins = '(' . $join->table . ' ' . $this->compile_joins( $query, $join->joins ) . ')';
+                function( JoinClause $join ) {
+                    $query = "{$join->from} as {$join->as}";
+
+                    if ( ! is_null( $join->joins ) ) {
+                        $query = "({$query} {$this->compile_joins( $join, $join->joins )})";
                     }
-                    return trim( "{$join->type} join {$table_and_nested_joins} {$this->compile_wheres($join)}" );
+                    return $join->bind_values( trim( "{$join->type} join {$query} {$this->compile_wheres($join)}" ) );
                 }, $joins
             )
         );

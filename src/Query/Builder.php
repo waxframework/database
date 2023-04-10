@@ -215,22 +215,23 @@ class Builder extends Relationship {
      /**
      * Add a join clause to the query.
      *
-     * @param  string  $table
-     * @param  Closure|string  $first
+     * @param  string $table
+     * @param  Closure|string $first
      * @param  string|null  $operator
-     * @param  string|null  $second
-     * @param  string  $type
-     * @param  bool  $where
+     * @param  string|null $second
+     * @param  string $type
+     * @param  bool $where
      * @return $this
      */
-    public function join( $table, $first, $operator = null, $second = null, $type = 'inner' ) {
+    public function join( $table, $first, $operator = null, $second = null, $type = 'inner', $where = false ) {
 
         $join = new JoinClause( $table, $type, $this->model );
 
         if ( $first instanceof Closure ) {
             call_user_func( $first, $join );
         } else {
-            $join->where( $first, $operator, $second );
+            $method = $where ? 'where' : 'on';
+            $join->$method( $first, $operator, $second );
         }
 
         $this->joins[] = $join;
@@ -241,26 +242,28 @@ class Builder extends Relationship {
      * Add a left join to the query.
      *
      * @param  string  $table
-     * @param  Closure|string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
+     * @param  Closure|string $first
+     * @param  string|null $operator
+     * @param  string|null $second
+     * @param  bool $where
      * @return $this
      */
-    public function left_join( $table, $first, $operator = null, $second = null ) {
-        return $this->join( $table, $first, $operator, $second, 'left' );
+    public function left_join( $table, $first, $operator = null, $second = null, $where = false ) {
+        return $this->join( $table, $first, $operator, $second, 'left', $where );
     }
 
     /**
      * Add a right join to the query.
      *
-     * @param  string  $table
-     * @param  Closure|string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
+     * @param  string $table
+     * @param  Closure|string $first
+     * @param  string|null $operator
+     * @param  string|null $second
+     * @param  bool $where
      * @return $this
      */
-    public function right_join( $table, $first, $operator = null, $second = null ) {
-        return $this->join( $table, $first, $operator, $second, 'right' );
+    public function right_join( $table, $first, $operator = null, $second = null, $where = false ) {
+        return $this->join( $table, $first, $operator, $second, 'right', $where );
     }
 
     /**
@@ -346,6 +349,18 @@ class Builder extends Relationship {
         $this->wheres[] = compact( 'type', 'boolean', 'column', 'operator', 'value' );
 
         return $this;
+    }
+
+    /**
+     * Add a or "where" clause comparing two columns to the query.
+     * 
+     * @param  string  $column
+     * @param  mixed  $operator
+     * @param  mixed  $value
+     * @return $this
+     */
+    public function or_where_column( $column, $operator = null, $value = null ) {
+        return $this->where_column( $column, $operator, $value, 'or' );
     }
 
     /**
@@ -718,7 +733,7 @@ class Builder extends Relationship {
      * @param string $sql
      * @return string
      */
-    protected function bind_values( string $sql ) {
+    public function bind_values( string $sql ) {
         global $wpdb;
         /**
          * @var wpdb $wpdb
