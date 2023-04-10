@@ -48,9 +48,9 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 - [License](#license)
 
 # Installation
-To install the WaxFramework Routing package, simply run the following command via Composer:
+To install the WaxFramework Database package, simply run the following command via Composer:
 ```
-composer require waxframework/routing
+composer require waxframework/database
 ```
 
 # Create Eloquent Model
