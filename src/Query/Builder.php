@@ -176,27 +176,37 @@ class Builder extends Relationship {
      * @return $this
      */
     public function with( $relations, $callback = null ) {
-        $current = &$this->relations;
-
-        // Traverse the items string and create nested arrays
-        $items = explode( '.', $relations );
-
-        foreach ( $items as $key ) {
-            if ( ! isset( $current[$key] ) ) {
-                $query         = new self( $this->model );
-                $current[$key] = [
-                    'query'    => $query,
-                    'children' => []
-                ];
-            } else {
-                $query = $current[$key]['query'];
-            }
-            $current = &$current[$key]['children'];
+        if ( ! is_array( $relations ) ) {
+            $relations = [$relations => $callback];
         }
 
-        // Apply the callback to the last item
-        if ( $callback instanceof Closure ) {
-            call_user_func( $callback, $query );
+        foreach ( $relations as $relation => $callback ) {
+            if ( is_int( $relation ) ) {
+                $relation = $callback;
+            }
+
+            $current = &$this->relations;
+
+            // Traverse the items string and create nested arrays
+            $items = explode( '.', $relation );
+
+            foreach ( $items as $key ) {
+                if ( ! isset( $current[$key] ) ) {
+                    $query         = new self( $this->model );
+                    $current[$key] = [
+                        'query'    => $query,
+                        'children' => []
+                    ];
+                } else {
+                    $query = $current[$key]['query'];
+                }
+                $current = &$current[$key]['children'];
+            }
+
+            // Apply the callback to the last item
+            if ( $callback instanceof Closure ) {
+                call_user_func( $callback, $query );
+            }
         }
 
         return $this;

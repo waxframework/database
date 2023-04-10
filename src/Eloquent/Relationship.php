@@ -30,7 +30,7 @@ class Relationship {
 
             $query->from( $related::get_table_name() );
             
-            $query->where_in( $query->from . '.' . $relationship->foreign_key, array_column( $parent_items, $relationship->local_key ) );
+            $query->where_in( $query->as . '.' . $relationship->foreign_key, array_column( $parent_items, $relationship->local_key ) );
 
             global $wpdb;
 

@@ -43,6 +43,8 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 	- [One To One](#one-to-one)
 	- [One To Many](#one-to-many)
 	- [One To Many (Inverse) / Belongs To](#one-to-many-inverse--belongs-to)
+	- [Constraining Query Loads](#constraining-query-loads)
+- [License](#license)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -363,3 +365,28 @@ class PostMeta extends Model {
     }
 }
 ```
+
+## Constraining Query Loads
+Sometimes you may wish to a relationship but also specify additional query conditions for the relationship query. You can accomplish this by passing an array of relationships to the with method where the array key is a relationship name and the array value is a closure that adds additional constraints to the relationship query:
+```php
+use WaxFramework\Database\Query\Builder;
+
+$posts = Post::query()->with('meta', function(Builder $query) {
+	$query->where('meta_id', 672);
+})->get();
+```
+
+In `with` method you can pass array for multiple relationship
+
+```php
+$posts = Post::query()->with([
+			'meta' => function (Builder $query) {
+				$query->where('meta_id', 672);
+			},
+			'user'
+		])->get();
+```
+
+# License
+
+WaxFramework Database is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
