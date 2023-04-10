@@ -39,6 +39,8 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 			- [The group\_by \& having Methods](#the-group_by--having-methods)
 		- [Limit \& Offset](#limit--offset)
 			- [The limit \& offset Methods](#the-limit--offset-methods)
+- [Relationships](#relationships)
+	- [One To One](#one-to-one)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -283,4 +285,35 @@ $posts = Post::query()->group_by('post_author')->having('post_author', '>', 100)
 You may use the `limit` and `offset` methods to limit the number of results returned from the query or to skip a given number of results in the query:
 ```php
 $posts = Post::query()->offset(10)->limit(5)->get();
+```
+# Relationships
+Database tables are often related to one another. For example, a blog post may have many comments or an order could be related to the user who placed it. Eloquent makes managing and working with these relationships easy, and supports a variety of common relationships:
+
+## One To One
+A one-to-one relationship is a very basic type of database relationship. For example, a `User` model might be associated with one `Phone` model. To define this relationship, we will place a `Phone` method on the `User` model. The `Phone` method should call the `has_one` method and return its result. The `has_one` method is available to your model via the model's `WaxFramework\Database\Eloquent\Model` base class:
+```php
+<?php
+
+namespace WaxFramework\App\Models;
+
+use WaxFramework\Database\Eloquent\Model;
+use WaxFramework\Database\Eloquent\Relations\HasOne;
+
+class User extends Model {
+
+	/**
+     * Get the phone associated with the user.
+     */
+    public function phone(): HasOne
+    {
+        return $this->has_one(Phone::class, 'ID', 'user_id');
+    }
+}
+```
+Eloquent assumes that the foreign key should have a value matching the primary key column of the parent. In other words, Eloquent will look for the value of the user's `ID` column in the `user_id` column of the `Phone` record.
+
+Now, let's retrieve all Users and their phone:
+
+```php
+$users = User::query()->with('phone')->get();
 ```
