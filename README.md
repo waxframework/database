@@ -41,6 +41,8 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 			- [The limit \& offset Methods](#the-limit--offset-methods)
 - [Relationships](#relationships)
 	- [One To One](#one-to-one)
+	- [One To Many](#one-to-many)
+	- [One To Many (Inverse) / Belongs To](#one-to-many-inverse--belongs-to)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -316,4 +318,48 @@ Now, let's retrieve all Users and their phone:
 
 ```php
 $users = User::query()->with('phone')->get();
+```
+
+## One To Many
+A one-to-many relationship is used to define relationships where a single model is the parent to one or more child models. For example, a blog post may have an infinite number of meta. Like all other Eloquent relationships, one-to-many relationships are defined by defining a method on your Eloquent model:
+```php
+<?php
+
+namespace WaxFramework\App\Models;
+
+use WaxFramework\Database\Eloquent\Model;
+use WaxFramework\Database\Eloquent\Relations\HasMany;
+
+class Post extends Model {
+
+	/**
+     * Get the all meta associated with the user.
+     */
+    public function meta(): HasMany
+    {
+        return $this->has_many(PostMeta::class, 'ID', 'post_id');
+    }
+}
+```
+## One To Many (Inverse) / Belongs To
+
+Now that we can access all of a post's meta, let's define a relationship to allow a meta to access its parent post. To define the inverse of a has_many relationship, define a relationship method on the child model which calls the belongs_to_one method:
+```php
+<?php
+
+namespace WaxFramework\App\Models;
+
+use WaxFramework\Database\Eloquent\Model;
+use WaxFramework\Database\Eloquent\Relations\BelongsToOne;
+
+class PostMeta extends Model {
+
+	/**
+     * Get the post that owns the meta.
+     */
+    public function post(): BelongsToOne
+    {
+        return $this->belongs_to_one(Post::class, 'post_id', 'ID');
+    }
+}
 ```
