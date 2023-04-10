@@ -313,7 +313,7 @@ class Builder extends Relationship {
      * @param  string  $boolean
      * @return $this
      */
-    public function where_column($column, $operator = null, $value = null, $boolean = 'and') {
+    public function where_column( $column, $operator = null, $value = null, $boolean = 'and' ) {
         // Here we will make some assumptions about the operator. If only 2 values are
         // passed to the method, we will assume that the operator is an equals sign
         // and keep going. Otherwise, we'll require the operator to be passed in.
@@ -390,6 +390,19 @@ class Builder extends Relationship {
         return $this;
     }
 
+     /**
+     * Add a or "where in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @param  string  $boolean
+     * @param  bool  $not
+     * @return $this
+     */
+    public function or_where_in( $column, $values ) {
+        return $this->where_in( $column, $values, 'or', false );
+    }
+
     /**
      * Add a "where not in" clause to the query.
      *
@@ -400,6 +413,17 @@ class Builder extends Relationship {
      */
     public function where_not_in( $column, $values, $boolean = 'and' ) {
         return $this->where_in( $column, $values, $boolean, true );
+    }
+
+    /**
+     * Add a or "where not in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @return $this
+     */
+    public function or_where_not_in( $column, $values ) {
+        return $this->where_not_in( $column, $values, 'or' );
     }
 
     /**
@@ -420,7 +444,18 @@ class Builder extends Relationship {
     }
 
     /**
-     * Add a where not between statement to the query.
+     * Add a or where between statement to the query.
+     *
+     * @param  string  $column
+     * @param  bool  $not
+     * @return $this
+     */
+    public function or_where_between( $column, array $values ) {
+        return $this->where_between( $column, $values, 'or', false );
+    }
+
+    /**
+     * Add a or where not between statement to the query.
      *
      * @param  string  $column
      * @param  array  $values
@@ -429,6 +464,17 @@ class Builder extends Relationship {
      */
     public function where_not_between( $column, array $values, $boolean = 'and' ) {
         return $this->where_between( $column, $values, $boolean, true );
+    }
+
+    /**
+     * Add a where not between statement to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @return $this
+     */
+    public function or_where_not_between( $column, array $values ) {
+        return $this->where_between( $column, $values, 'or', true );
     }
 
     /**

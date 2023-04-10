@@ -15,7 +15,10 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 - [Update Data](#update-data)
 - [Delete Data](#delete-data)
 - [Read Data](#read-data)
-	- [Retrieving All Rows From A Table](#retrieving-all-rows-from-a-table)
+	- [Aggregates](#aggregates)
+	- [Retrieving Models](#retrieving-models)
+		- [All Records](#all-records)
+		- [Single Record](#single-record)
 	- [Select Statements](#select-statements)
 	- [Join](#join)
 		- [Inner Join Clause](#inner-join-clause)
@@ -29,12 +32,13 @@ WaxFramework Database is a robust and versatile SQL query builder designed speci
 		- [where\_between / or\_where\_between](#where_between--or_where_between)
 		- [where\_not\_between / or\_where\_not\_between](#where_not_between--or_where_not_between)
 		- [where\_in / where\_not\_in / or\_where\_in / or\_where\_not\_in](#where_in--where_not_in--or_where_in--or_where_not_in)
-	- [first()](#first)
-	- [order\_by()](#order_by)
-	- [order\_by\_desc()](#order_by_desc)
-	- [group\_by()](#group_by)
-	- [the group\_by and having Methods](#the-group_by-and-having-methods)
-	- [The limit \& offset Methods](#the-limit--offset-methods)
+	- [Ordering, Grouping, Limit \& Offset](#ordering-grouping-limit--offset)
+		- [Ordering](#ordering)
+			- [The order\_by Method](#the-order_by-method)
+		- [Grouping](#grouping)
+			- [The group\_by \& having Methods](#the-group_by--having-methods)
+		- [Limit \& Offset](#limit--offset)
+			- [The limit \& offset Methods](#the-limit--offset-methods)
 
 # Installation
 To install the WaxFramework Routing package, simply run the following command via Composer:
@@ -118,10 +122,21 @@ Post::query()->where('post_id', 100)->delete();
 To retrieve data, the WaxFramework Database offers a variety of methods:
 Get all posts
 
-## Retrieving All Rows From A Table
+## Aggregates
+The query builder also provides a variety of methods for retrieving aggregate values like `count`, `max`, `min`, `avg`, and `sum`. You may call any of these methods after constructing your query:
+```php
+$posts = Post::query()->count();
+```
+## Retrieving Models
+### All Records
 To get all the posts, use the `get` method as shown below:
 ```php
 $posts = Post::query()->get();
+```
+### Single Record
+To retrieve a single record from the database, use the `first` method as shown below:
+```php
+$posts = Post::query()->where('id', 100)->first();
 ```
 ## Select Statements
 You may not always want to select all columns from a database table. Using the `select` method, you can specify a custom "select" clause for the query:
@@ -242,42 +257,30 @@ The `where_not_in` method verifies that the given column's value is not containe
 ```php
 $posts = Post::query()->where_not_in('ID', [100, 105])->get();
 ```
-## first()
-To retrieve a single record from the database, use the `first` method as shown below:
-```php
-$posts = Post::query()->where('id', 100)->first();
-```
-## order_by()
-Order posts ascending order by post_id column using `order_by`
 
+## Ordering, Grouping, Limit & Offset
+### Ordering
+#### The order_by Method
+The `order_by` method allows you to sort the results of the query by a given column. The first argument accepted by the `order_by` method should be the column you wish to sort by, while the second argument determines the direction of the sort and may be either `asc` or `desc`:
 ```php
-$posts = Post::query()->order_by('post_id')->get();
+$posts = Post::query()->order_by('post_title')->get();
 ```
-## order_by_desc()
-Order posts descending order by post_id column using `order_by_desc`
+To sort by multiple columns, you may simply invoke `order_by` as many times as necessary:
 
 ```php
-$posts = Post::query()->order_by_desc('post_id')->get();
+$posts = Post::query()->order_by('post_title')->order_by_desc('post_status')->get();
 ```
-## group_by()
-Group the posts by post_author column using `group_by` method 
-
-```php
-$posts = Post::query()->group_by('post_author')->get();
-
-```
-
-## the group_by and having Methods
+### Grouping
+#### The group_by & having Methods
 As you might expect, the `group_by` and `having` methods may be used to group the query results. The `having` method's signature is similar to that of the `where` method:
-
 ```php
 $posts = Post::query()->group_by('post_author')->having('post_author', '>', 100)->get();
-```
 
-## The limit & offset Methods
+```
+### Limit & Offset
+#### The limit & offset Methods
 
 You may use the `limit` and `offset` methods to limit the number of results returned from the query or to skip a given number of results in the query:
-
 ```php
 $posts = Post::query()->offset(10)->limit(5)->get();
 ```
