@@ -136,7 +136,7 @@ class Builder extends Relationship {
     /**
      * Set the table which the query is targeting.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @param  string|null  $as
      * @return $this
      */

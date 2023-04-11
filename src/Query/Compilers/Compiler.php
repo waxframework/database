@@ -27,7 +27,7 @@ class Compiler {
     /**
      * Compile a select query into SQL.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @return string
      */
     public function compile_select( Builder $query ) {
@@ -37,7 +37,7 @@ class Compiler {
     /**
      * Compile an insert statement into SQL.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @param  array  $values
      * @return string
      */
@@ -76,7 +76,7 @@ class Compiler {
     /**
      * Compile an update statement into SQL.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @param  array  $values
      * @return string
      */
@@ -100,7 +100,7 @@ class Compiler {
     /**
      * Compile a delete statement into SQL.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @return string
      */
     public function compile_delete( Builder $query ) {
@@ -112,7 +112,7 @@ class Compiler {
     /**
      * Compile the components necessary for a select clause.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @return array
      */
     protected function compile_components( Builder $query ) {
@@ -131,7 +131,7 @@ class Compiler {
     /**
      * Compile the "select *" portion of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @param  array  $columns
      * @return string|null
      */
@@ -152,7 +152,7 @@ class Compiler {
     /**
      * Compile an aggregated select clause.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @param  array  $aggregate
      * @return string
      */
@@ -169,7 +169,7 @@ class Compiler {
     /**
      * Compile the "from" portion of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @param string $table
      * @return string
      */
@@ -183,7 +183,7 @@ class Compiler {
     /**
      * Compile the "where" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @return string
      */
     public function compile_wheres( Builder $query ) {
@@ -244,7 +244,7 @@ class Compiler {
      /**
      * Compile the "join" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @param  array  $joins
      * @return string
      */
@@ -266,7 +266,7 @@ class Compiler {
     /**
      * Compile the "order by" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @param  array  $orders
      * @return string
      */
@@ -287,7 +287,7 @@ class Compiler {
     /**
      * Compile the "having" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @return string
      */
     protected function compile_havings( Builder $query ) {
@@ -300,7 +300,7 @@ class Compiler {
     /**
      * Compile the "offset" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder $query
+     * @param  Builder $query
      * @param  int  $offset
      * @return string
      */
@@ -311,7 +311,7 @@ class Compiler {
     /**
      * Compile the "limit" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @param  int  $limit
      * @return string
      */
@@ -322,7 +322,7 @@ class Compiler {
      /**
      * Compile the "group by" portions of the query.
      *
-     * @param  \WaxFramework\Database\Query\Builder  $query
+     * @param  Builder  $query
      * @param array $groups
      * @return string
      */

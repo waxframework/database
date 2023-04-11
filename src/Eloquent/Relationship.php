@@ -4,6 +4,8 @@ namespace WaxFramework\Database\Eloquent;
 
 use WaxFramework\Database\Eloquent\Relations\BelongsToOne;
 use WaxFramework\Database\Eloquent\Relations\HasOne;
+use WaxFramework\Database\Eloquent\Relations\Relation;
+use WaxFramework\Database\Query\Builder;
 use wpdb;
 
 class Relationship {
@@ -14,17 +16,17 @@ class Relationship {
 
         foreach ( $relations as $key => $relation ) {
             /**
-             * @var \WaxFramework\Database\Eloquent\Relations\Relation $relationship
+             * @var Relation $relationship
              */
             $relationship = $model->$key();
 
             /**
-             * @var \WaxFramework\Database\Eloquent\Model $related
+             * @var Model $related
              */
             $related = $relationship->get_related();
 
             /**
-             * @var \WaxFramework\Database\Query\Builder $query 
+             * @var Builder $query 
              */
             $query = $relation['query'];
 
@@ -52,7 +54,7 @@ class Relationship {
 
             foreach ( $relations as $key => $relation ) {
                 /**
-                 * @var \WaxFramework\Database\Eloquent\Relations\Relation $relationship
+                 * @var Relation $relationship
                  */
                 $relationship = $relation['relationship'];
 

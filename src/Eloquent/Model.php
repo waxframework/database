@@ -17,7 +17,7 @@ abstract class Model {
     /**
      * Begin querying the model.
      *
-     * @return \WaxFramework\Database\Query\Builder
+     * @return Builder
      */
     public static function query( $as = null ) {
         $model   = new static;
@@ -33,8 +33,7 @@ abstract class Model {
      *
      * @param  string $related
      * @param  string $foreign_key
-     * @param  string $local_key
-     * @return \WaxFramework\Database\Eloquent\Relations\HasMany
+     * @param  HasMany
      */
     public function has_many( string $related, string $foreign_key, string $local_key ) {
         return new HasMany( $related, $foreign_key, $local_key );
@@ -46,7 +45,7 @@ abstract class Model {
      * @param  string $related
      * @param  string  $foreign_key
      * @param  string  $local_key
-     * @return \WaxFramework\Database\Eloquent\Relations\HasOne
+     * @return HasOne
      */
     public function has_one( $related, $foreign_key, $local_key ) {
         return new HasOne( $related, $foreign_key, $local_key );
@@ -58,7 +57,7 @@ abstract class Model {
      * @param  string $related
      * @param  string  $foreign_key
      * @param  string  $local_key
-     * @return \WaxFramework\Database\Eloquent\Relations\BelongsToOne
+     * @return BelongsToOne
      */
     public function belongs_to_one( $related, $foreign_key, $local_key ) {
         return new BelongsToOne( $related, $foreign_key, $local_key );
@@ -70,7 +69,7 @@ abstract class Model {
      * @param  string $related
      * @param  string  $foreign_key
      * @param  string  $local_key
-     * @return \WaxFramework\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function belongs_to_many( $related, $foreign_key, $local_key ) {
         return new BelongsToMany( $related, $foreign_key, $local_key );
