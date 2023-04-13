@@ -2,18 +2,19 @@
 
 namespace WaxFramework\Database;
 
+use wpdb;
+
 class Resolver {
     protected array $network_tables = [
-        'commentmeta',
-        'comments',
-        'links',
-        'options',
-        'postmeta',
-        'posts',
-        'termmeta',
-        'terms',
-        'term_relationships',
-        'term_taxonomy'
+        'blogmeta',
+        'blogs',
+        'blog_versions',
+        'registration_log',
+        'signups',
+        'site',
+        'sitemeta',
+        'usermeta',
+        'users'
     ];
 
     public function set_network_tables( array $tables ) {
@@ -36,9 +37,12 @@ class Resolver {
 
     protected function resolve_table_name( string $table ) {
         global $wpdb;
+        /**
+         * @var wpdb $wpdb
+         */
         if ( in_array( $table, $this->network_tables ) ) {
-            return $wpdb->prefix . $table;
+            return $wpdb->base_prefix . $table;
         }
-        return $wpdb->base_prefix . $table;
+        return $wpdb->prefix . $table;
     }
 }
