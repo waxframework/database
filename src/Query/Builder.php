@@ -734,6 +734,9 @@ class Builder extends Relationship {
      * @return string
      */
     public function bind_values( string $sql ) {
+        if ( empty( $this->bindings ) ) {
+            return $sql;
+        }
         global $wpdb;
         /**
          * @var wpdb $wpdb
