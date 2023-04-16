@@ -67,11 +67,14 @@ abstract class Model {
      * Define an inverse many-to-many relationship.
      *
      * @param  string $related
-     * @param  string  $foreign_key
-     * @param  string  $local_key
+     * @param  string $pivot
+     * @param  string $foreign_pivot_key
+     * @param  string $local_pivot_key
+     * @param  string $foreign_key
+     * @param  string $local_key
      * @return BelongsToMany
      */
-    public function belongs_to_many( $related, $foreign_key, $local_key ) {
-        return new BelongsToMany( $related, $foreign_key, $local_key );
+    public function belongs_to_many( $related, $pivot, $foreign_pivot_key, $local_pivot_key, $foreign_key, $local_key ) {
+        return new BelongsToMany( $related, $pivot, $foreign_pivot_key, $local_pivot_key, $foreign_key, $local_key );
     }
 }

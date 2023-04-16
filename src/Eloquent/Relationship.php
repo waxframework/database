@@ -2,6 +2,7 @@
 
 namespace WaxFramework\Database\Eloquent;
 
+use WaxFramework\Database\Eloquent\Relations\BelongsToMany;
 use WaxFramework\Database\Eloquent\Relations\BelongsToOne;
 use WaxFramework\Database\Eloquent\Relations\HasOne;
 use WaxFramework\Database\Eloquent\Relations\Relation;
@@ -30,9 +31,25 @@ class Relationship {
              */
             $query = $relation['query'];
 
-            $query->from( $related::get_table_name() );
+            $table_name = $related::get_table_name();
+
+            $query->from( $table_name );
             
-            $query->where_in( $query->as . '.' . $relationship->foreign_key, array_column( $parent_items, $relationship->local_key ) );
+            $local_key   = $relationship->local_key;
+            $foreign_key = $relationship->foreign_key;
+            $local_ids   = array_column( $parent_items, $local_key );
+
+            if ( $relationship instanceof BelongsToMany ) {
+                $pivot_table_name  = $relationship->pivot::get_table_name();
+                $foreign_pivot_key = $relationship->foreign_pivot_key;
+                $local_pivot_key   = $relationship->local_pivot_key;
+
+                $query->select( "{$table_name}.*", "{$pivot_table_name}.{$local_pivot_key} as pivot_{$local_pivot_key}" )
+                ->join( $pivot_table_name, "{$pivot_table_name}.{$foreign_pivot_key}", "{$table_name}.{$foreign_key}" )
+                ->where_in( "{$pivot_table_name}.{$local_pivot_key}", $local_ids );
+            } else {
+                $query->where_in( $query->as . '.' . $foreign_key,  $local_ids );
+            }
 
             global $wpdb;
 
@@ -59,11 +76,17 @@ class Relationship {
                 $relationship = $relation['relationship'];
 
                 $local_value = $item->{$relationship->local_key};
+                
+                if ( $relationship instanceof BelongsToMany ) {
+                    $foreign_key = "pivot_{$relationship->local_pivot_key}";
+                } else {
+                    $foreign_key = $relationship->foreign_key;
+                }
 
                 $children_items = array_values(
                     array_filter(
-                        $relation['items'], function( $single_item ) use ( $local_value, $relationship ) {
-                            return $single_item->{$relationship->foreign_key} == $local_value;
+                        $relation['items'], function( $single_item ) use ( $local_value, $foreign_key ) {
+                            return $single_item->{$foreign_key} == $local_value;
                         }
                     )
                 );
