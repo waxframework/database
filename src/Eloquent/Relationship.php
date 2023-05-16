@@ -47,6 +47,10 @@ class Relationship {
                     $local_ids                          = $relation_ids['column_ids'];
                     $relations[$key]['relation_status'] = true;
                     $relations[$key]['relation_ids']    = $relation_ids['ids'];
+
+                    if ( empty( $local_ids ) ) {
+                        continue;
+                    }
                 }
             } else {
                 $local_ids = array_unique( array_column( $parent_items, $local_key ) );
@@ -83,6 +87,11 @@ class Relationship {
         foreach ( $parent_items as $parent_key => $item ) {
 
             foreach ( $relations as $key => $relation ) {
+
+                if ( empty( $relation['relationship'] ) ) {
+                    continue;
+                }
+
                 /**
                  * @var Relation $relationship
                  */
@@ -162,7 +171,7 @@ class Relationship {
 
     protected function evaluate_condition( $left_operand, $operator, $rightOperand ) {
         switch ( $operator ) {
-            case '==':
+            case '=':
                 return $left_operand == $rightOperand;
             case '!=':
                 return $left_operand != $rightOperand;
