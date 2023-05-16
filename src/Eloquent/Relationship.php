@@ -37,7 +37,20 @@ class Relationship {
             
             $local_key   = $relationship->local_key;
             $foreign_key = $relationship->foreign_key;
-            $local_ids   = array_column( $parent_items, $local_key );
+            
+            if ( $relationship instanceof BelongsToOne ) {
+                if ( empty( $relationship->wheres ) ) {
+                    $relations[$key]['relation_status'] = false;
+                    $local_ids                          = array_unique( array_column( $parent_items, $local_key ) );
+                } else {
+                    $relation_ids                       = $this->get_where_in_ids( $parent_items, $local_key, $relationship->wheres );
+                    $local_ids                          = $relation_ids['column_ids'];
+                    $relations[$key]['relation_status'] = true;
+                    $relations[$key]['relation_ids']    = $relation_ids['ids'];
+                }
+            } else {
+                $local_ids = array_unique( array_column( $parent_items, $local_key ) );
+            }
 
             if ( $relationship instanceof BelongsToMany ) {
                 $pivot_table_name  = $relationship->pivot::get_table_name();
@@ -75,6 +88,10 @@ class Relationship {
                  */
                 $relationship = $relation['relationship'];
 
+                if ( $relationship instanceof BelongsToOne && true === $relation['relation_status'] && ! in_array( $item->id, $relation['relation_ids'] ) ) {
+                    continue;
+                }
+
                 $local_value = $item->{$relationship->local_key};
                 
                 if ( $relationship instanceof BelongsToMany ) {
@@ -99,5 +116,60 @@ class Relationship {
             }
         }
         return $parent_items;
+    }
+
+    public function get_where_in_ids( array $items, string $column_key, array $wheres ) {
+        $ids        = [];
+        $column_ids = [];
+
+        foreach ( $items as $item ) {
+            $matches = true;
+            foreach ( $wheres as $index => $condition ) {
+                $column   = $condition['column'];
+                $value    = $condition['value'];
+                $operator = $condition['operator'];
+                $boolean  = $condition['boolean'];
+
+                if ( $index === 0 ) {
+                    $matches = $this->evaluate_condition( $item->$column, $operator, $value );
+                } else {
+                    if ( $boolean === 'and' && ! $matches ) {
+                        $matches = false;
+                        break;
+                    } elseif ( $boolean === 'or' && $matches ) {
+                        $matches = true;
+                        break;
+                    }
+
+                    $currentMatches = $this->evaluate_condition( $item->$column, $operator, $value );
+
+                    if ( $boolean === 'and' ) {
+                        $matches = $matches && $currentMatches;
+                    } elseif ( $boolean === 'or' ) {
+                        $matches = $matches || $currentMatches;
+                    }
+                }
+            }
+
+            if ( $matches ) {
+                $ids[]        = $item->id;
+                $column_ids[] = $item->$column_key;
+            }
+        }
+
+        return compact( 'ids', 'column_ids' );
+    }
+
+    protected function evaluate_condition( $left_operand, $operator, $rightOperand ) {
+        switch ( $operator ) {
+            case '==':
+                return $left_operand == $rightOperand;
+            case '!=':
+                return $left_operand != $rightOperand;
+            // Add more cases for other operators as needed
+            default:
+                // Unsupported operator, handle error or continue as desired
+                return false;
+        }
     }
 }
