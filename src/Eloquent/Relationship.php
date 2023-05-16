@@ -47,13 +47,13 @@ class Relationship {
                     $local_ids                          = $relation_ids['column_ids'];
                     $relations[$key]['relation_status'] = true;
                     $relations[$key]['relation_ids']    = $relation_ids['ids'];
-
-                    if ( empty( $local_ids ) ) {
-                        continue;
-                    }
                 }
             } else {
                 $local_ids = array_unique( array_column( $parent_items, $local_key ) );
+            }
+
+            if ( empty( $local_ids ) ) {
+                continue;
             }
 
             if ( $relationship instanceof BelongsToMany ) {
