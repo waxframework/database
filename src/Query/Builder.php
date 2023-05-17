@@ -590,6 +590,17 @@ class Builder extends Relationship {
     }
 
     /**
+     * Add an "order by raw" clause to the query.
+     *
+     * @param  string  $sql
+     * @return $this
+     */
+    public function order_by_raw( string $sql ) {
+        $this->orders[] = ['column' => $sql, 'direction' => ''];
+        return $this;
+    }
+
+    /**
      * Set the "offset" value of the query.
      *
      * @param  int  $value

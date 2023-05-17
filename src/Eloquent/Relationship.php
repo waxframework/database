@@ -150,12 +150,12 @@ class Relationship {
                         break;
                     }
 
-                    $currentMatches = $this->evaluate_condition( $item->$column, $operator, $value );
+                    $current_matches = $this->evaluate_condition( $item->$column, $operator, $value );
 
                     if ( $boolean === 'and' ) {
-                        $matches = $matches && $currentMatches;
+                        $matches = $matches && $current_matches;
                     } elseif ( $boolean === 'or' ) {
-                        $matches = $matches || $currentMatches;
+                        $matches = $matches || $current_matches;
                     }
                 }
             }
@@ -169,12 +169,12 @@ class Relationship {
         return compact( 'ids', 'column_ids' );
     }
 
-    protected function evaluate_condition( $left_operand, $operator, $rightOperand ) {
+    protected function evaluate_condition( $left_operand, $operator, $right_operand ) {
         switch ( $operator ) {
             case '=':
-                return $left_operand == $rightOperand;
+                return $left_operand == $right_operand;
             case '!=':
-                return $left_operand != $rightOperand;
+                return $left_operand != $right_operand;
             // Add more cases for other operators as needed
             default:
                 // Unsupported operator, handle error or continue as desired
