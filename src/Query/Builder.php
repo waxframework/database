@@ -692,6 +692,20 @@ class Builder extends Relationship {
         //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
         return $this->process_relationships( $wpdb->get_results( $this->to_sql() ), $this->relations, $this->model );
     }
+
+    public function pagination( int $per_page, int $current_page, int $max_per_page = 100, int $min_per_page = 10 ) {
+        if ( $per_page > $max_per_page || $per_page < $min_per_page ) {
+            $per_page = $max_per_page;
+        }
+
+        if ( 0 >= $current_page ) {
+            $current_page = 1;
+        }
+
+        $offset = ( $current_page - 1 ) * $per_page;
+
+        return $this->limit( $per_page )->offset( $offset )->get();
+    }
     
     public function first() {
         $data = $this->limit( 1 )->get();
