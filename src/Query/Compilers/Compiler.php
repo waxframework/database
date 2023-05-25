@@ -2,8 +2,11 @@
 
 namespace WaxFramework\Database\Query\Compilers;
 
+use WaxFramework\Database\Eloquent\Relations\HasMany;
 use WaxFramework\Database\Query\Builder;
 use WaxFramework\Database\Query\JoinClause;
+use WaxFramework\Database\Eloquent\Model;
+use WaxFramework\Database\Eloquent\Relations\Relation;
 
 class Compiler {
     /**
@@ -146,7 +149,45 @@ class Compiler {
             $select = 'select ';
         }
 
-        return $select . $this->columnize( $columns );
+        $select .= $this->columnize( $columns );
+
+        if ( empty( $query->count_relations ) ) {
+            return $select;
+        }
+
+        $model = $query->model;
+
+        foreach ( $query->count_relations as $key => $relation_query ) {
+            /**
+             * @var Builder $relation_query 
+             */
+            $relation_keys = explode( ' as ', $key );
+
+            /**
+             * @var Relation $relationship
+             */
+            $relationship = $model->{$relation_keys[0]}();
+
+            if ( ! $relationship instanceof HasMany ) {
+                continue;
+            }
+
+            /**
+             * @var Model $related
+             */
+            $related    = $relationship->get_related();
+            $table_name = $related::get_table_name();
+            $relation_query->from( $table_name );
+
+            if ( isset( $relation_keys[1] ) ) {
+                $as = $relation_keys[1];
+            } else {
+                $as = "{$relation_keys[0]}_count";
+            }
+            $select .= ", ({$relation_query->aggregate_tosql('count', ['*'])}) as {$as}";
+        }
+
+        return $select;
     }
 
     /**

@@ -22,7 +22,7 @@ class Builder extends Relationship {
      *
      * @param \WaxFramework\Database\Eloquent\Model
      */
-    protected $model;
+    public $model;
 
     /**
      *
@@ -114,6 +114,8 @@ class Builder extends Relationship {
      * @var array
      */
     protected $relations = [];
+
+    public $count_relations = [];
 
     /**
      * All of the available clause operators.
@@ -209,6 +211,25 @@ class Builder extends Relationship {
             }
         }
 
+        return $this;
+    }
+
+    public function with_count( $relations, $callback = null ) {
+        if ( ! is_array( $relations ) ) {
+            $relations = [$relations => $callback];
+        }
+        foreach ( $relations as $relation => $callback ) {
+            if ( is_int( $relation ) ) {
+                $relation = $callback;
+            }
+
+            $query = new self( $this->model );
+
+            if ( $callback instanceof Closure ) {
+                call_user_func( $callback, $query );
+            }
+            $this->count_relations[$relation] = $query;
+        }
         return $this;
     }
 
@@ -779,8 +800,12 @@ class Builder extends Relationship {
     }
 
     public function aggregate( $function, $columns = ['*'] ) {
-        $results = $this->setAggregate( $function, $columns )->get();
+        $results = $this->set_aggregate( $function, $columns )->get();
         return (int) $results[0]->aggregate;
+    }
+    
+    public function aggregate_tosql( $function, $columns = ['*'] ) {
+        return $this->set_aggregate( $function, $columns )->to_sql();
     }
 
     /**
@@ -790,7 +815,7 @@ class Builder extends Relationship {
      * @param  array  $columns
      * @return $this
      */
-    protected function setAggregate( $function, $columns ) {
+    protected function set_aggregate( $function, $columns ) {
         $this->aggregate = compact( 'function', 'columns' );
 
         if ( empty( $this->groups ) ) {
