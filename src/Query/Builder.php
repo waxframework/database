@@ -818,7 +818,7 @@ class Builder extends Relationship {
         return (int) $results[0]->aggregate;
     }
     
-    public function aggregate_tosql( $function, $columns = ['*'] ) {
+    public function aggregate_to_sql( $function, $columns = ['*'] ) {
         return $this->set_aggregate( $function, $columns )->to_sql();
     }
 

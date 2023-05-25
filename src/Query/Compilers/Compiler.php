@@ -184,7 +184,8 @@ class Compiler {
             } else {
                 $as = "{$relation_keys[0]}_count";
             }
-            $select .= ", ({$relation_query->aggregate_tosql('count', ['*'])}) as {$as}";
+            $sql     = $relation_query->where_column( $query->as . '.' . $relationship->local_key, $table_name . '.' . $relationship->foreign_key )->aggregate_to_sql( 'count', ['*'] );
+            $select .= ", ({$sql}) as {$as}";
         }
 
         return $select;
