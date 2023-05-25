@@ -242,7 +242,7 @@ To get all posts if the post has meta data, you can use either of the following 
 
 1. Process One: In this process, we use a closure function to define a subquery that selects `1` from the `postmeta` table where the `post_id` column in `postmeta` table is equal to the `ID` column in the `posts` table. The closure function is passed as an argument to the `where_exists` method to filter the posts.
 	```php
-	$posts = Post::query()->(function(Builder $query) {
+	$posts = Post::query()->where_exists(function(Builder $query) {
 		$query->select(1)->from('postmeta')->where_column('postmeta.post_id', 'posts.id')->limit(1);
 	})->get();
 	```
