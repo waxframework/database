@@ -197,7 +197,7 @@ This will return all the rows from the `users` table along with their matching r
 Similarly, to perform a "right join" on the users and `posts` tables using the `user_id` column as the join constraint, you can do the following:
 ```php
 $users = User::query()
-            ->rightJoin('posts', 'users.id', '=', 'posts.user_id')
+            ->right_join('posts', 'users.id', '=', 'posts.user_id')
             ->get();
 
 ```
