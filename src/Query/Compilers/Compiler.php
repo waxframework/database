@@ -277,6 +277,9 @@ class Compiler {
 
                     $exists       = $where['not'] ? 'not exists' : 'exists';
                     $where_query .= " {$where['boolean']} {$exists} ({$sql})";
+                    break;
+                case 'raw':
+                    $where_query .= " {$where['boolean']} {$where['sql']}";
             }
         }
 

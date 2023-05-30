@@ -523,6 +523,19 @@ class Builder extends Relationship {
         return $this->where_between( $column, $values, 'or', true );
     }
 
+    public function where_raw( $sql, $boolean = 'and' ) {
+        $type = 'raw';
+        // Now that we are working with just a simple query we can put the elements
+        // in our array and add the query binding to our array of bindings that
+        // will be bound to each SQL statements when it is finally executed.
+        $this->wheres[] = compact( 'sql', 'boolean', 'type' );
+        return $this;
+    }
+
+    public function or_where_raw( $sql ) {
+        return $this->where_raw( $sql, 'or' );
+    }
+
     /**
      * Add a "group by" clause to the query.
      *
