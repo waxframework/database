@@ -49,7 +49,7 @@ class JoinClause extends Builder {
     /**
      * Add an "on" clause to the join.
      * 
-     * @param  \Closure|string  $first
+     * @param  string  $first
      * @param  string|null  $operator
      * @param  string|null  $second
      * @param  string  $boolean

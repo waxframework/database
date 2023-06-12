@@ -2,7 +2,6 @@
 
 namespace WaxFramework\Database\Query;
 
-use Closure;
 use InvalidArgumentException;
 use WaxFramework\Database\Eloquent\Model;
 use WaxFramework\Database\Eloquent\Relationship;
@@ -174,7 +173,7 @@ class Builder extends Relationship {
      * Set the relationships that should be eager loaded.
      *
      * @param  string|array  $relations
-     * @param  string|Closure|null  $callback
+     * @param  string|Closure|array|null $callback
      * @return $this
      */
     public function with( $relations, $callback = null ) {
@@ -206,7 +205,7 @@ class Builder extends Relationship {
             }
 
             // Apply the callback to the last item
-            if ( $callback instanceof Closure ) {
+            if ( is_callable( $callback ) ) {
                 call_user_func( $callback, $query );
             }
         }
@@ -214,6 +213,11 @@ class Builder extends Relationship {
         return $this;
     }
 
+     /**
+     * @param  string|array $relations
+     * @param  string|Closure|array|null $callback
+     * @return $this
+     */
     public function with_count( $relations, $callback = null ) {
         if ( ! is_array( $relations ) ) {
             $relations = [$relations => $callback];
@@ -225,7 +229,7 @@ class Builder extends Relationship {
 
             $query = new self( $this->model );
 
-            if ( $callback instanceof Closure ) {
+            if ( is_callable( $callback ) ) {
                 call_user_func( $callback, $query );
             }
             $this->count_relations[$relation] = $query;
@@ -237,7 +241,7 @@ class Builder extends Relationship {
      * Add a join clause to the query.
      *
      * @param  string $table
-     * @param  Closure|string $first
+     * @param  Closure|array|string $first
      * @param  string|null  $operator
      * @param  string|null $second
      * @param  string $type
@@ -248,7 +252,7 @@ class Builder extends Relationship {
 
         $join = new JoinClause( $table, $type, $this->model );
 
-        if ( $first instanceof Closure ) {
+        if ( is_callable( $first ) ) {
             call_user_func( $first, $join );
         } else {
             $method = $where ? 'where' : 'on';
@@ -263,7 +267,7 @@ class Builder extends Relationship {
      * Add a left join to the query.
      *
      * @param  string  $table
-     * @param  Closure|string $first
+     * @param  Closure|array|string $first
      * @param  string|null $operator
      * @param  string|null $second
      * @param  bool $where
@@ -277,7 +281,7 @@ class Builder extends Relationship {
      * Add a right join to the query.
      *
      * @param  string $table
-     * @param  Closure|string $first
+     * @param  Closure|array|string $first
      * @param  string|null $operator
      * @param  string|null $second
      * @param  bool $where
@@ -325,7 +329,7 @@ class Builder extends Relationship {
      /**
      * Add an "or where" clause to the query.
      *
-     * @param  Closure|string|array  $column
+     * @param  Closure|array|string|array  $column
      * @param  mixed  $operator
      * @param  mixed  $value
      * @return $this
@@ -387,14 +391,14 @@ class Builder extends Relationship {
     /**
      * Add an exists clause to the query.
      *
-     * @param  Closure|static  $callback
+     * @param  Closure|array|static  $callback
      * @param  string  $boolean
      * @param  bool  $not
      * @return $this
      */
     public function where_exists( $callback, $boolean = 'and', $not = false ) {
 
-        if ( $callback instanceof Closure ) {
+        if ( is_callable( $callback ) ) {
             $query = new static( $this->model );
             call_user_func( $callback, $query );
         } else {
@@ -411,7 +415,7 @@ class Builder extends Relationship {
      /**
      * Add a where not exists clause to the query.
      *
-     * @param  Closure|static  $callback
+     * @param  Closure|array|static  $callback
      * @param  string  $boolean
      * @return $this
      */
