@@ -2,6 +2,7 @@
 
 namespace WaxFramework\Database\Query;
 
+use DateTime;
 use InvalidArgumentException;
 use WaxFramework\Database\Eloquent\Model;
 use WaxFramework\Database\Eloquent\Relationship;
@@ -805,7 +806,13 @@ class Builder extends Relationship {
          * @var wpdb $wpdb
          */
         //phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-        return $wpdb->prepare( $sql, ...$this->bindings );
+        return $wpdb->prepare(
+            $sql, ...array_map(
+                function( $value ) {
+                    return $value instanceof DateTime ? $value->format( 'Y-m-d H:i:s' ) : $value;
+                }, $this->bindings
+            )
+        );
     }
 
     /**
