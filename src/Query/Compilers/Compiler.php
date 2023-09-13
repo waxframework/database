@@ -108,8 +108,8 @@ class Compiler {
      */
     public function compile_delete( Builder $query ) {
         $where = $this->compile_wheres( $query );
-        
-        return "delete from {$query->from} {$where}";
+        $joins = $this->compile_joins( $query, $query->joins );
+        return "delete {$query->as} from {$query->from} as {$query->as} {$joins} {$where}";
     }
 
     /**
@@ -280,6 +280,10 @@ class Compiler {
                     break;
                 case 'raw':
                     $where_query .= " {$where['boolean']} {$where['sql']}";
+                    break;
+                case 'is_null':
+                    $null         = $where['not'] ? "not null" : "null";
+                    $where_query .= " {$where['boolean']} {$where['column']} is {$null}";
             }
         }
 

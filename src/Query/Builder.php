@@ -71,7 +71,7 @@ class Builder extends Relationship {
      *
      * @var array
      */
-    public $joins;
+    public $joins = [];
 
      /**
      * The table limit for the query.
@@ -475,6 +475,24 @@ class Builder extends Relationship {
      */
     public function or_where_not_in( $column, $values ) {
         return $this->where_not_in( $column, $values, 'or' );
+    }
+
+    public function where_is_null( string $column, bool $not = false, string $boolean = 'and' ) {
+        $type           = 'is_null';
+        $this->wheres[] = compact( 'type', 'column', 'boolean', 'not' );
+        return $this;
+    }
+
+    public function or_where_is_null( string $column, $not = false ) {
+        return $this->where_is_null( $column, $not, 'or' );
+    }
+
+    public function where_not_is_null( string $column, string $boolean = 'and' ) {
+        return $this->where_is_null( $column, true, $boolean );
+    }
+
+    public function or_where_not_is_null( string $column ) {
+        return $this->or_where_is_null( $column, true, );
     }
 
     /**
