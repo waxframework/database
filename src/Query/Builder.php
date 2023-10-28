@@ -839,6 +839,11 @@ class Builder extends Relationship {
      * @return string
      */
     public function set_binding( $value ) {
+
+        if ( is_null( $value ) ) {
+            return "null";
+        }
+
         $this->bindings[] = $value;
 
         $type = gettype( $value );
