@@ -5,6 +5,7 @@ namespace WaxFramework\Database\Query;
 use DateTime;
 use InvalidArgumentException;
 use WaxFramework\Database\Eloquent\Model;
+use WaxFramework\Database\Eloquent\Relations\HasMany;
 use WaxFramework\Database\Eloquent\Relationship;
 use WaxFramework\Database\Query\Compilers\Compiler;
 use WaxFramework\Database\Eloquent\Relations\Relation;
@@ -56,7 +57,7 @@ class Builder extends Relationship {
      *
      * @var array
      */
-    public $columns = ['*'];
+    public $columns = [];
 
     /**
      * Indicates if the query returns distinct results.
@@ -233,14 +234,16 @@ class Builder extends Relationship {
 
         $related    = $relationship->get_related();
         $table_name = $related::get_table_name();
+
         $total_key  = $relation_keys[1];
+        $join_alias = $total_key . '_count';
 
         $columns   = $this->columns;
-        $columns[] = "{$total_key}.{$total_key}";
+        $columns[] = "{$join_alias}.{$total_key}";
         $this->select( $columns );
 
         return $this->left_join(
-            "$table_name as $total_key", function( JoinClause $join ) use( $relationship, $total_key, $callback ) {
+            "$table_name as $join_alias", function( JoinClause $join ) use( $relationship, $total_key, $callback ) {
                 $join->on( "{$join->as}.{$relationship->foreign_key}", '=', "{$this->as}.{$relationship->local_key}" )
                 ->select( "{$join->as}.{$relationship->foreign_key}", "COUNT(*) AS {$total_key}" )
                 ->group_by( "{$join->as}.{$relationship->foreign_key}" );
@@ -703,6 +706,10 @@ class Builder extends Relationship {
      * @return string
      */
     public function to_sql() {
+        if ( empty( $this->columns ) ) {
+            $this->columns = ['*'];
+        }
+
         $compiler = new Compiler;
         return $this->bind_values( $compiler->compile_select( $this ) );
     }
