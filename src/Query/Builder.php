@@ -586,8 +586,8 @@ class Builder extends Relationship {
      * @param  array|string  ...$groups
      * @return $this
      */
-    public function group_by( ...$groups ) {
-        $this->groups = $groups;
+    public function group_by( $groups ) {
+        $this->groups = is_array($groups) ? $groups : func_get_args();
         return $this;
     }
 

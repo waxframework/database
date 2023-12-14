@@ -278,7 +278,7 @@ class Compiler {
         
                     $query .= " as {$join->as}";
 
-                    if ( ! is_null( $join->joins ) ) {
+                    if ( ! empty( $join->joins ) ) {
                         $query = "({$query} {$this->compile_joins( $join, $join->joins )})";
                     }
                     return $join->bind_values( trim( "{$join->type} join {$query} {$this->compile_ons($join)}" ) );
