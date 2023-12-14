@@ -7,6 +7,7 @@ use InvalidArgumentException;
 use WaxFramework\Database\Eloquent\Model;
 use WaxFramework\Database\Eloquent\Relationship;
 use WaxFramework\Database\Query\Compilers\Compiler;
+use WaxFramework\Database\Eloquent\Relations\Relation;
 use wpdb;
 
 class Builder extends Relationship {
@@ -220,22 +221,34 @@ class Builder extends Relationship {
      * @return $this
      */
     public function with_count( $relations, $callback = null ) {
-        if ( ! is_array( $relations ) ) {
-            $relations = [$relations => $callback];
-        }
-        foreach ( $relations as $relation => $callback ) {
-            if ( is_int( $relation ) ) {
-                $relation = $callback;
-            }
+        $relation_keys = explode( ' as ', $relations );
+        /**
+         * @var Relation $relationship
+         */
+        $relationship = $this->model->{$relation_keys[0]}();
 
-            $query = new self( $this->model );
-
-            if ( is_callable( $callback ) ) {
-                call_user_func( $callback, $query );
-            }
-            $this->count_relations[$relation] = $query;
+        if ( ! $relationship instanceof HasMany ) {
+            return $this;
         }
-        return $this;
+
+        $related    = $relationship->get_related();
+        $table_name = $related::get_table_name();
+        $total_key  = $relation_keys[1];
+
+        $columns   = $this->columns;
+        $columns[] = "{$total_key}.{$total_key}";
+        $this->select( $columns );
+
+        return $this->left_join(
+            "$table_name as $total_key", function( JoinClause $join ) use( $relationship, $total_key, $callback ) {
+                $join->on( "{$join->as}.{$relationship->foreign_key}", '=', "{$this->as}.{$relationship->local_key}" )
+                ->select( "{$join->as}.{$relationship->foreign_key}", "COUNT(*) AS {$total_key}" )
+                ->group_by( "{$join->as}.{$relationship->foreign_key}" );
+                if ( is_callable( $callback ) ) {
+                    call_user_func( $callback, $join );
+                }
+            }
+        );
     }
 
      /**
@@ -350,9 +363,9 @@ class Builder extends Relationship {
      * @param  mixed  $operator
      * @param  mixed  $value
      * @param  string  $boolean
-     * @return $this
+     * @return $this|array
      */
-    public function where_column( $column, $operator = null, $value = null, $boolean = 'and' ) {
+    public function where_column( $column, $operator = null, $value = null, $boolean = 'and', $return_data = true ) {
         // Here we will make some assumptions about the operator. If only 2 values are
         // passed to the method, we will assume that the operator is an equals sign
         // and keep going. Otherwise, we'll require the operator to be passed in.
@@ -372,8 +385,13 @@ class Builder extends Relationship {
         // Now that we are working with just a simple query we can put the elements
         // in our array and add the query binding to our array of bindings that
         // will be bound to each SQL statements when it is finally executed.
-        $this->wheres[] = compact( 'type', 'boolean', 'column', 'operator', 'value' );
+        $data = compact( 'type', 'boolean', 'column', 'operator', 'value' );
 
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
         return $this;
     }
 
@@ -385,8 +403,8 @@ class Builder extends Relationship {
      * @param  mixed  $value
      * @return $this
      */
-    public function or_where_column( $column, $operator = null, $value = null ) {
-        return $this->where_column( $column, $operator, $value, 'or' );
+    public function or_where_column( $column, $operator = null, $value = null, $return_data = false ) {
+        return $this->where_column( $column, $operator, $value, $return_data );
     }
 
     /**

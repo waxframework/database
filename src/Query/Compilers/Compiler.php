@@ -2,11 +2,8 @@
 
 namespace WaxFramework\Database\Query\Compilers;
 
-use WaxFramework\Database\Eloquent\Relations\HasMany;
 use WaxFramework\Database\Query\Builder;
 use WaxFramework\Database\Query\JoinClause;
-use WaxFramework\Database\Eloquent\Model;
-use WaxFramework\Database\Eloquent\Relations\Relation;
 
 class Compiler {
     /**
@@ -149,46 +146,7 @@ class Compiler {
             $select = 'select ';
         }
 
-        $select .= $this->columnize( $columns );
-
-        if ( empty( $query->count_relations ) ) {
-            return $select;
-        }
-
-        $model = $query->model;
-
-        foreach ( $query->count_relations as $key => $relation_query ) {
-            /**
-             * @var Builder $relation_query 
-             */
-            $relation_keys = explode( ' as ', $key );
-
-            /**
-             * @var Relation $relationship
-             */
-            $relationship = $model->{$relation_keys[0]}();
-
-            if ( ! $relationship instanceof HasMany ) {
-                continue;
-            }
-
-            /**
-             * @var Model $related
-             */
-            $related    = $relationship->get_related();
-            $table_name = $related::get_table_name();
-            $relation_query->from( $table_name );
-
-            if ( isset( $relation_keys[1] ) ) {
-                $as = $relation_keys[1];
-            } else {
-                $as = "{$relation_keys[0]}_count";
-            }
-            $sql     = $relation_query->where_column( $query->as . '.' . $relationship->local_key, $table_name . '.' . $relationship->foreign_key )->aggregate_to_sql( 'count', ['*'] );
-            $select .= ", ({$sql}) as {$as}";
-        }
-
-        return $select;
+        return $select . $this->columnize( $columns );
     }
 
     /**
@@ -233,13 +191,20 @@ class Compiler {
             return '';
         }
 
-        if ( $query instanceof JoinClause ) {
-            $where_query = "on";
-        } else {
-            $where_query = "where";
-        }
+        return $this->compile_where_or_having( $query, $query->wheres );
+    }
 
-        return $this->compile_where_or_having( $query, $query->wheres, $where_query );
+     /**
+     * Compile the "join on" portions of the query.
+     *
+     * @param JoinClause $query
+     * @return string
+     */
+    public function compile_ons( JoinClause $query ) {
+        if ( empty( $query->ons ) ) {
+            return '';
+        }
+        return $this->compile_where_or_having( $query, $query->ons, 'on' );
     }
 
     protected function compile_where_or_having( Builder $query, array $items, string $type = 'where' ) {
@@ -305,12 +270,12 @@ class Compiler {
         return implode(
             ' ', array_map(
                 function( JoinClause $join ) {
-                    $query = "{$join->from} as {$join->as}";
+                    $query = $join->to_sql();
 
                     if ( ! is_null( $join->joins ) ) {
                         $query = "({$query} {$this->compile_joins( $join, $join->joins )})";
                     }
-                    return $join->bind_values( trim( "{$join->type} join {$query} {$this->compile_wheres($join)}" ) );
+                    return $join->bind_values( trim( "{$join->type} join {$query} {$this->compile_ons($join)}" ) );
                 }, $joins
             )
         );

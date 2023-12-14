@@ -19,6 +19,8 @@ class JoinClause extends Builder {
      */
     public $table;
 
+    public array $ons = [];
+
     /**
      * Create a new join clause instance.
      * 
@@ -28,7 +30,8 @@ class JoinClause extends Builder {
      */
     public function __construct( string $table, string $type, Model $model ) {
         parent::__construct( $model );
-        $this->from( $table );
+        $table = explode( ' as ', $table );
+        $this->from( $table[0], isset( $table[1] ) ? $table[1] : null );
         $this->type =  $type;
     }
 
@@ -42,7 +45,7 @@ class JoinClause extends Builder {
      * @return $this
      */
     public function on( $first, $operator = null, $second = null, $boolean = 'and' ) {
-        $this->where_column( $first, $operator, $second, $boolean );
+        $this->ons[] = $this->where_column( $first, $operator, $second, $boolean, true );
         return $this;
     }
 
@@ -56,7 +59,7 @@ class JoinClause extends Builder {
      * @return $this
      */
     public function or_on( $first, $operator = null, $second = null ) {
-        $this->or_where_column( $first, $operator, $second );
+        $this->ons[] = $this->or_where_column( $first, $operator, $second, true );
         return $this;
     }
 }
