@@ -244,7 +244,7 @@ class Builder extends Relationship {
 
         return $this->left_join(
             "$table_name as $join_alias", function( JoinClause $join ) use( $relationship, $total_key, $callback ) {
-                $join->on( "{$join->as}.{$relationship->foreign_key}", '=', "{$this->as}.{$relationship->local_key}" )
+                $join->on_column( "{$join->as}.{$relationship->foreign_key}", '=', "{$this->as}.{$relationship->local_key}" )
                 ->select( "{$join->as}.{$relationship->foreign_key}", "COUNT(*) AS {$total_key}" )
                 ->group_by( "{$join->as}.{$relationship->foreign_key}" );
                 if ( is_callable( $callback ) ) {

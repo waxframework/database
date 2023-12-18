@@ -36,30 +36,54 @@ class JoinClause extends Builder {
     }
 
     /**
-     * Add an "on" clause to the join.
-     * 
-     * @param  string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
-     * @param  string  $boolean
+     * Add a basic on clause to the query.
+     *
+     * @param  string  $column
+     * @param  mixed  $operator
+     * @param  mixed  $value
      * @return $this
      */
-    public function on( $first, $operator = null, $second = null, $boolean = 'and' ) {
-        $this->ons[] = $this->where_column( $first, $operator, $second, $boolean, true );
+    public function on( string $column, $operator = null, $value = null ) {
+        $this->ons[] = $this->where( $column, $operator, $value, 'and', true );
+        return $this;
+    }
+
+     /**
+     * Add an "or on" clause to the query.
+     *
+     * @param  Closure|array|string|array  $column
+     * @param  mixed  $operator
+     * @param  mixed  $value
+     * @return $this
+     */
+    public function or_on( $column, $operator = null, $value = null ) {
+        $this->ons[] = $this->or_where( $column, $operator, $value, true );
         return $this;
     }
 
     /**
-     * Add an "on" clause to the join.
+     * Add a "on column" clause comparing two columns to the query.
      * 
-     * @param  string  $first
-     * @param  string|null  $operator
-     * @param  string|null  $second
-     * @param  string  $boolean
+     * @param  string  $first_column
+     * @param  mixed  $operator
+     * @param  mixed  $second_column
      * @return $this
      */
-    public function or_on( $first, $operator = null, $second = null ) {
-        $this->ons[] = $this->or_where_column( $first, $operator, $second, true );
+    public function on_column( $first_column, $operator = null, $second_column = null ) {
+        $this->ons[] = $this->where_column( $first_column, $operator, $second_column, 'and', true );
+        return $this;
+    }
+
+    /**
+     * Add a "or on column" clause comparing two columns to the query.
+     * 
+     * @param  string  $first_column
+     * @param  mixed  $operator
+     * @param  mixed  $second_column
+     * @return $this
+     */
+    public function or_on_column( $first_column, $operator = null, $second_column = null ) {
+        $this->ons[] = $this->or_where_column( $first_column, $operator, $second_column, true );
         return $this;
     }
 
