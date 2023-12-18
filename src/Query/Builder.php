@@ -272,8 +272,11 @@ class Builder extends Relationship {
         if ( is_callable( $first ) ) {
             call_user_func( $first, $join );
         } else {
-            $method = $where ? 'where' : 'on';
-            $join->$method( $first, $operator, $second );
+            if ( $where ) {
+                $join->where( $first, $operator, $second );
+            } else {
+                $join->on_column( $first, $operator, $second );
+            }
         }
 
         $this->joins[] = $join;
