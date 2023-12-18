@@ -62,4 +62,50 @@ class JoinClause extends Builder {
         $this->ons[] = $this->or_where_column( $first, $operator, $second, true );
         return $this;
     }
+
+    /**
+     * Add a "on in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @return $this
+     */
+    public function on_in( string $column, array $values ) {
+        $this->ons[] = $this->where_in( $column, $values, 'and', false, true );
+        return $this;
+    }
+
+    /**
+     * Add a or "on in" clause to the query.
+     *
+     * @param  string  $column
+     * @param  array  $values
+     * @return $this|array
+     */
+    public function or_on_in( string $column, array $values ) {
+        $this->ons[] = $this->or_where_in( $column, $values, true );
+        return $this;
+    }
+
+    /**
+     * Add where raw query
+     *
+     * @param string $sql
+     * @return $this|array
+     */
+    public function on_raw( string $sql ) {
+        $this->ons[] = $this->where_raw( $sql, 'and', true );
+        return $this;
+    }
+
+    /**
+     * Add or on raw query
+     *
+     * @param string $sql
+     * @return $this
+     */
+    public function or_on_raw( string $sql ) {
+        $this->ons[] = $this->or_where_raw( $sql, true );
+        return $this;
+    }
 }

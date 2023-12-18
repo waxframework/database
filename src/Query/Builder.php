@@ -315,9 +315,10 @@ class Builder extends Relationship {
      * @param  mixed  $operator
      * @param  mixed  $value
      * @param  string  $boolean
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where( $column, $operator = null, $value = null, $boolean = 'and' ) {
+    public function where( $column, $operator = null, $value = null, $boolean = 'and', bool $return_data = false ) {
 
         // Here we will make some assumptions about the operator. If only 2 values are
         // passed to the method, we will assume that the operator is an equals sign
@@ -338,7 +339,13 @@ class Builder extends Relationship {
         // Now that we are working with just a simple query we can put the elements
         // in our array and add the query binding to our array of bindings that
         // will be bound to each SQL statements when it is finally executed.
-        $this->wheres[] = compact( 'type', 'boolean', 'column', 'operator', 'value' );
+        $data = compact( 'type', 'boolean', 'column', 'operator', 'value' );
+
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
 
         return $this;
     }
@@ -349,14 +356,15 @@ class Builder extends Relationship {
      * @param  Closure|array|string|array  $column
      * @param  mixed  $operator
      * @param  mixed  $value
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function or_where( $column, $operator = null, $value = null ) {
+    public function or_where( $column, $operator = null, $value = null, bool $return_data = false ) {
         [$value, $operator] = $this->prepare_value_and_operator(
             $value, $operator, func_num_args() === 2
         );
 
-        return $this->where( $column, $operator, $value, 'or' );
+        return $this->where( $column, $operator, $value, 'or', $return_data );
     }
 
      /**
@@ -366,9 +374,10 @@ class Builder extends Relationship {
      * @param  mixed  $operator
      * @param  mixed  $value
      * @param  string  $boolean
+     * @param  boolean $return_data
      * @return $this|array
      */
-    public function where_column( $column, $operator = null, $value = null, $boolean = 'and', $return_data = true ) {
+    public function where_column( $column, $operator = null, $value = null, $boolean = 'and', bool $return_data = false ) {
         // Here we will make some assumptions about the operator. If only 2 values are
         // passed to the method, we will assume that the operator is an equals sign
         // and keep going. Otherwise, we'll require the operator to be passed in.
@@ -404,10 +413,11 @@ class Builder extends Relationship {
      * @param  string  $column
      * @param  mixed  $operator
      * @param  mixed  $value
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function or_where_column( $column, $operator = null, $value = null, $return_data = false ) {
-        return $this->where_column( $column, $operator, $value, $return_data );
+    public function or_where_column( $column, $operator = null, $value = null, bool $return_data = false ) {
+        return $this->where_column( $column, $operator, $value, 'or', $return_data );
     }
 
     /**
@@ -416,10 +426,10 @@ class Builder extends Relationship {
      * @param  Closure|array|static  $callback
      * @param  string  $boolean
      * @param  bool  $not
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where_exists( $callback, $boolean = 'and', $not = false ) {
-
+    public function where_exists( $callback, $boolean = 'and', $not = false, bool $return_data = false ) {
         if ( is_callable( $callback ) ) {
             $query = new static( $this->model );
             call_user_func( $callback, $query );
@@ -429,7 +439,13 @@ class Builder extends Relationship {
 
         $type = 'exists';
 
-        $this->wheres[] = compact( 'type', 'query', 'boolean', 'not' );
+        $data = compact( 'type', 'query', 'boolean', 'not' );
+
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
 
         return $this;
     }
@@ -439,10 +455,11 @@ class Builder extends Relationship {
      *
      * @param  Closure|array|static  $callback
      * @param  string  $boolean
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where_not_exists( $callback, $boolean = 'and' ) {
-        return $this->where_exists( $callback, $boolean, true );
+    public function where_not_exists( $callback, $boolean = 'and', bool $return_data = false ) {
+        return $this->where_exists( $callback, $boolean, true, $return_data );
     }
 
      /**
@@ -452,12 +469,19 @@ class Builder extends Relationship {
      * @param  array  $values
      * @param  string  $boolean
      * @param  bool  $not
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where_in( $column, $values, $boolean = 'and', $not = false ) {
+    public function where_in( string $column, array $values, $boolean = 'and', $not = false, bool $return_data = false ) {
         $type = 'in';
 
-        $this->wheres[] = compact( 'type', 'column', 'values', 'boolean', 'not' );
+        $data = compact( 'type', 'column', 'values', 'boolean', 'not' );
+
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
 
         return $this;
     }
@@ -467,12 +491,11 @@ class Builder extends Relationship {
      *
      * @param  string  $column
      * @param  array  $values
-     * @param  string  $boolean
-     * @param  bool  $not
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function or_where_in( $column, $values ) {
-        return $this->where_in( $column, $values, 'or', false );
+    public function or_where_in( $column, $values, bool $return_data = false ) {
+        return $this->where_in( $column, $values, 'or', false, $return_data );
     }
 
     /**
@@ -481,10 +504,11 @@ class Builder extends Relationship {
      * @param  string  $column
      * @param  array  $values
      * @param  string  $boolean
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where_not_in( $column, $values, $boolean = 'and' ) {
-        return $this->where_in( $column, $values, $boolean, true );
+    public function where_not_in( $column, $values, $boolean = 'and', bool $return_data = false ) {
+        return $this->where_in( $column, $values, $boolean, true, $return_data );
     }
 
     /**
@@ -492,28 +516,44 @@ class Builder extends Relationship {
      *
      * @param  string  $column
      * @param  array  $values
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function or_where_not_in( $column, $values ) {
-        return $this->where_not_in( $column, $values, 'or' );
+    public function or_where_not_in( $column, $values, bool $return_data = false ) {
+        return $this->where_not_in( $column, $values, 'or', $return_data );
     }
 
-    public function where_is_null( string $column, bool $not = false, string $boolean = 'and' ) {
-        $type           = 'is_null';
-        $this->wheres[] = compact( 'type', 'column', 'boolean', 'not' );
+    /**
+     * add a "where in null" clause to the query
+     *
+     * @param string $column
+     * @param boolean $not
+     * @param string $boolean
+     * @param boolean $return_data
+     * @return $this|array
+     */
+    public function where_is_null( string $column, bool $not = false, string $boolean = 'and', bool $return_data = false ) {
+        $type = 'is_null';
+        $data = compact( 'type', 'column', 'boolean', 'not' );
+
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
         return $this;
     }
 
-    public function or_where_is_null( string $column, $not = false ) {
-        return $this->where_is_null( $column, $not, 'or' );
+    public function or_where_is_null( string $column, $not = false, bool $return_data = false ) {
+        return $this->where_is_null( $column, $not, 'or', $return_data );
     }
 
-    public function where_not_is_null( string $column, string $boolean = 'and' ) {
-        return $this->where_is_null( $column, true, $boolean );
+    public function where_not_is_null( string $column, string $boolean = 'and', bool $return_data = false ) {
+        return $this->where_is_null( $column, true, $boolean, $return_data );
     }
 
-    public function or_where_not_is_null( string $column ) {
-        return $this->or_where_is_null( $column, true, );
+    public function or_where_not_is_null( string $column, bool $return_data = false ) {
+        return $this->or_where_is_null( $column, true, $return_data );
     }
 
     /**
@@ -523,13 +563,19 @@ class Builder extends Relationship {
      * @param  array  $values
      * @param  string  $boolean
      * @param  bool  $not
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where_between( $column, array $values, $boolean = 'and', $not = false ) {
+    public function where_between( $column, array $values, $boolean = 'and', $not = false, bool $return_data = false ) {
         $type = 'between';
 
-        $this->wheres[] = compact( 'type', 'boolean', 'column', 'values', 'not' );
+        $data = compact( 'type', 'boolean', 'column', 'values', 'not' );
 
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
         return $this;
     }
 
@@ -538,10 +584,11 @@ class Builder extends Relationship {
      *
      * @param  string  $column
      * @param  bool  $not
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function or_where_between( $column, array $values ) {
-        return $this->where_between( $column, $values, 'or', false );
+    public function or_where_between( $column, array $values, bool $return_data = false ) {
+        return $this->where_between( $column, $values, 'or', false, $return_data );
     }
 
     /**
@@ -550,10 +597,11 @@ class Builder extends Relationship {
      * @param  string  $column
      * @param  array  $values
      * @param  string  $boolean
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function where_not_between( $column, array $values, $boolean = 'and' ) {
-        return $this->where_between( $column, $values, $boolean, true );
+    public function where_not_between( $column, array $values, $boolean = 'and', bool $return_data = false ) {
+        return $this->where_between( $column, $values, $boolean, true, $return_data );
     }
 
     /**
@@ -561,23 +609,45 @@ class Builder extends Relationship {
      *
      * @param  string  $column
      * @param  array  $values
-     * @return $this
+     * @param  boolean $return_data
+     * @return $this|array
      */
-    public function or_where_not_between( $column, array $values ) {
-        return $this->where_between( $column, $values, 'or', true );
+    public function or_where_not_between( $column, array $values, bool $return_data = false ) {
+        return $this->where_between( $column, $values, 'or', true, $return_data );
     }
 
-    public function where_raw( $sql, $boolean = 'and' ) {
+    /**
+     * Add where raw query
+     *
+     * @param string $sql
+     * @param string $boolean
+     * @param boolean $return_data
+     * @return $this|array
+     */
+    public function where_raw( string $sql, $boolean = 'and', bool $return_data = false ) {
         $type = 'raw';
         // Now that we are working with just a simple query we can put the elements
         // in our array and add the query binding to our array of bindings that
         // will be bound to each SQL statements when it is finally executed.
-        $this->wheres[] = compact( 'sql', 'boolean', 'type' );
+        $data = compact( 'sql', 'boolean', 'type' );
+
+        if ( $return_data ) {
+            return $data;
+        }
+
+        $this->wheres[] = $data;
         return $this;
     }
 
-    public function or_where_raw( $sql ) {
-        return $this->where_raw( $sql, 'or' );
+    /**
+     * Add or where raw query
+     *
+     * @param string $sql
+     * @param boolean $return_data
+     * @return $this|array
+     */
+    public function or_where_raw( string $sql, bool $return_data = false ) {
+        return $this->where_raw( $sql, 'or', $return_data );
     }
 
     /**
@@ -587,7 +657,7 @@ class Builder extends Relationship {
      * @return $this
      */
     public function group_by( $groups ) {
-        $this->groups = is_array($groups) ? $groups : func_get_args();
+        $this->groups = is_array( $groups ) ? $groups : func_get_args();
         return $this;
     }
 

@@ -270,7 +270,7 @@ class Compiler {
         return implode(
             ' ', array_map(
                 function( JoinClause $join ) {
-                    if ( ! empty( $join->columns ) ) {
+                    if ( ! empty( $join->columns ) || ! empty( $join->wheres ) ) {
                         $query = "({$join->to_sql()})";
                     } else {
                         $query = $join->from;
