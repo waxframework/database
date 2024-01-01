@@ -239,7 +239,7 @@ class Builder extends Relationship {
         $join_alias = $total_key . '_count';
 
         $columns   = $this->columns;
-        $columns[] = "{$join_alias}.{$total_key}";
+        $columns[] = "COALESCE({$join_alias}.{$total_key}, 0) as {$total_key}";
         $this->select( $columns );
 
         return $this->left_join(
